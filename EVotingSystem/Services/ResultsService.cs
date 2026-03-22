@@ -6,6 +6,6 @@ namespace EVotingSystem.Services;
 
 public class ResultsService(IFirestoreElectionRepository repository) : IResultsService
 {
-    public Task<PublicDashboardViewModel> GetPublicDashboardAsync(CancellationToken cancellationToken) =>
+    public Task<PublicResultsViewModel> GetPublicDashboardAsync(CancellationToken cancellationToken) =>
         repository.GetPublicDashboardAsync(cancellationToken);
 }

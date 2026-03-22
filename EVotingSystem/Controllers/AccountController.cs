@@ -20,12 +20,12 @@ public class AccountController(
             return RedirectToAction("Index", "Home");
         }
 
-        return View(new RegisterViewModel());
+        return View(new RegistrationViewModel());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterViewModel model, CancellationToken cancellationToken)
+    public async Task<IActionResult> Register(RegistrationViewModel model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
@@ -44,7 +44,8 @@ public class AccountController(
             UserName = emailCheck.NormalizedEmail,
             Email = emailCheck.NormalizedEmail,
             FullName = model.FullName,
-            ProvinceCode = model.Province,
+            ProvinceCode = model.ProvinceCode,
+            ProvinceName = model.ProvinceName,
             MailcheckValidated = emailCheck.IsAllowed,
             MailcheckStatus = emailCheck.RiskLevel
         };

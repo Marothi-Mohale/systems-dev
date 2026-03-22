@@ -4,5 +4,5 @@ namespace EVotingSystem.Services.Interfaces;
 
 public interface IVotingService
 {
-    Task<BallotViewModel> GetBallotAsync(string voterName, CancellationToken cancellationToken);
+    Task<VoteViewModel> GetBallotAsync(string voterName, CancellationToken cancellationToken);
 }

@@ -1,4 +1,4 @@
-@model EVotingSystem.Models.ViewModels.BallotViewModel
+@model EVotingSystem.Models.ViewModels.VoteViewModel
 @{
     ViewData["Title"] = "Ballot";
 }
@@ -8,11 +8,19 @@
         <div>
             <span class="eyebrow">Authenticated Voter Area</span>
             <h1 class="display-6 fw-bold mb-2">@Model.VoterName's ballot</h1>
-            <p class="text-secondary mb-0">This page is protected by ASP.NET Core Identity. The next build step is connecting the submit action to a Firestore transaction that records the vote, increments candidate totals, and marks the voter as having voted.</p>
+            <p class="text-secondary mb-0">This page is protected by ASP.NET Core Identity. The voting rules are explicit in the model: one authenticated, eligible voter gets one vote during the election window.</p>
         </div>
         <div class="mini-stat">
             <span class="stat-label">Election</span>
             <strong class="stat-value small-value">@Model.Election.Title</strong>
+        </div>
+    </div>
+
+    <div class="feature-panel mb-4">
+        <div class="d-flex flex-wrap gap-4">
+            <span><strong>Voting window:</strong> @Model.Election.StartsAtUtc.ToLocalTime():g to @Model.Election.EndsAtUtc.ToLocalTime():g</span>
+            <span><strong>Max votes per voter:</strong> @Model.VotingRules.MaxVotesPerVoterPerElection</span>
+            <span><strong>Status:</strong> @(Model.CanSubmitVote ? "Open for voting" : "Unavailable")</span>
         </div>
     </div>
 

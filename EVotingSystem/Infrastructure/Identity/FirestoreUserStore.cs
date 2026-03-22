@@ -18,6 +18,7 @@ public class FirestoreUserStore :
 
         user.Id = string.IsNullOrWhiteSpace(user.Id) ? Guid.NewGuid().ToString("N") : user.Id;
         user.RegisteredAtUtc = user.RegisteredAtUtc == default ? DateTime.UtcNow : user.RegisteredAtUtc;
+        user.UpdatedAtUtc = DateTime.UtcNow;
 
         if (!usersById.TryAdd(user.Id, Clone(user)))
         {
@@ -139,6 +140,7 @@ public class FirestoreUserStore :
     public Task<IdentityResult> UpdateAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        user.UpdatedAtUtc = DateTime.UtcNow;
         usersById[user.Id] = Clone(user);
         return Task.FromResult(IdentityResult.Success);
     }
@@ -160,9 +162,13 @@ public class FirestoreUserStore :
             AccessFailedCount = user.AccessFailedCount,
             FullName = user.FullName,
             ProvinceCode = user.ProvinceCode,
+            ProvinceName = user.ProvinceName,
             HasVoted = user.HasVoted,
+            ActiveElectionId = user.ActiveElectionId,
             MailcheckValidated = user.MailcheckValidated,
             MailcheckStatus = user.MailcheckStatus,
-            RegisteredAtUtc = user.RegisteredAtUtc
+            RegisteredAtUtc = user.RegisteredAtUtc,
+            UpdatedAtUtc = user.UpdatedAtUtc,
+            LastLoginAtUtc = user.LastLoginAtUtc
         };
 }

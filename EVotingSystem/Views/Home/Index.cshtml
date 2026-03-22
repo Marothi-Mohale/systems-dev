@@ -1,4 +1,4 @@
-@model EVotingSystem.Models.ViewModels.PublicDashboardViewModel
+@model EVotingSystem.Models.ViewModels.PublicResultsViewModel
 @{
     ViewData["Title"] = "Public Results";
 }
@@ -18,19 +18,19 @@
             <div class="stats-panel">
                 <div>
                     <span class="stat-label">Total Votes</span>
-                    <strong class="stat-value">@Model.TotalVotes</strong>
+                    <strong class="stat-value">@Model.Statistics.TotalVotesCast</strong>
                 </div>
                 <div>
                     <span class="stat-label">Turnout</span>
-                    <strong class="stat-value">@Model.PopulationTurnoutPercentage%</strong>
+                    <strong class="stat-value">@Model.Statistics.TurnoutPercentage%</strong>
                 </div>
                 <div>
                     <span class="stat-label">Election Status</span>
-                    <strong class="stat-value">@(Model.ElectionOpen ? "Open" : "Closed")</strong>
+                    <strong class="stat-value">@(Model.Statistics.ElectionOpen ? "Open" : "Closed")</strong>
                 </div>
                 <div>
                     <span class="stat-label">Last Refreshed</span>
-                    <strong class="stat-value">@Model.GeneratedAtUtc.ToLocalTime().ToString("g")</strong>
+                    <strong class="stat-value">@Model.Statistics.GeneratedAtUtc.ToLocalTime().ToString("g")</strong>
                 </div>
             </div>
         </div>
@@ -38,7 +38,7 @@
 </section>
 
 <section class="row g-4">
-    @foreach (var result in Model.Results)
+    @foreach (var result in Model.CandidateResults)
     {
         <div class="col-12 col-lg-4">
             <article class="candidate-card h-100">

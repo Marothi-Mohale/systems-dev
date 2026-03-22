@@ -1,4 +1,4 @@
-@model EVotingSystem.Models.ViewModels.RegisterViewModel
+@model EVotingSystem.Models.ViewModels.RegistrationViewModel
 @{
     ViewData["Title"] = "Register";
 }
@@ -24,20 +24,20 @@
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
             <div class="col-md-6">
-                <label asp-for="Province" class="form-label"></label>
-                <select asp-for="Province" class="form-select form-select-lg">
-                    <option value="">Select a province</option>
-                    <option>Eastern Cape</option>
-                    <option>Free State</option>
-                    <option>Gauteng</option>
-                    <option>KwaZulu-Natal</option>
-                    <option>Limpopo</option>
-                    <option>Mpumalanga</option>
-                    <option>North West</option>
-                    <option>Northern Cape</option>
-                    <option>Western Cape</option>
+                <label asp-for="ProvinceCode" class="form-label"></label>
+                <select asp-for="ProvinceCode" class="form-select form-select-lg">
+                    <option value="">Select a province (optional)</option>
+                    <option value="EC">Eastern Cape</option>
+                    <option value="FS">Free State</option>
+                    <option value="GP">Gauteng</option>
+                    <option value="KZN">KwaZulu-Natal</option>
+                    <option value="LP">Limpopo</option>
+                    <option value="MP">Mpumalanga</option>
+                    <option value="NW">North West</option>
+                    <option value="NC">Northern Cape</option>
+                    <option value="WC">Western Cape</option>
                 </select>
-                <span asp-validation-for="Province" class="text-danger"></span>
+                <span asp-validation-for="ProvinceCode" class="text-danger"></span>
             </div>
             <div class="col-md-6">
                 <label asp-for="Password" class="form-label"></label>

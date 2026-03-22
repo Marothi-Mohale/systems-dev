@@ -9,28 +9,30 @@ public class FirestoreElectionRepository(IOptions<SeedOptions> seedOptions) : IF
 {
     private readonly SeedOptions seeds = seedOptions.Value;
 
-    public Task<BallotViewModel> GetBallotAsync(string voterName, CancellationToken cancellationToken)
+    public Task<VoteViewModel> GetBallotAsync(string voterName, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         // TODO: Replace seeded data with Firestore reads from the `candidates`
         // and `elections` collections once the Firebase integration is wired in.
-        return Task.FromResult(new BallotViewModel
+        return Task.FromResult(new VoteViewModel
         {
             Election = seeds.Election,
             Candidates = seeds.Candidates,
-            VoterName = string.IsNullOrWhiteSpace(voterName) ? "Registered voter" : voterName
+            VoterName = string.IsNullOrWhiteSpace(voterName) ? "Registered voter" : voterName,
+            VotingRules = seeds.Election.VotingRules
         });
     }
 
-    public Task<PublicDashboardViewModel> GetPublicDashboardAsync(CancellationToken cancellationToken)
+    public Task<PublicResultsViewModel> GetPublicDashboardAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         var totalVotes = seeds.Candidates.Sum(candidate => candidate.VoteCount);
         var resultRows = seeds.Candidates
-            .OrderBy(candidate => candidate.Name)
-            .Select(candidate => new PollResultRow
+            .OrderByDescending(candidate => candidate.VoteCount)
+            .ThenBy(candidate => candidate.Name)
+            .Select(candidate => new CandidateResultViewModel
             {
                 CandidateId = candidate.Id,
                 CandidateName = candidate.Name,
@@ -42,16 +44,27 @@ public class FirestoreElectionRepository(IOptions<SeedOptions> seedOptions) : IF
             })
             .ToList();
 
-        return Task.FromResult(new PublicDashboardViewModel
+        var maxVotes = resultRows.Count == 0 ? 0 : resultRows.Max(row => row.VoteCount);
+        foreach (var row in resultRows)
+        {
+            row.IsLeading = row.VoteCount == maxVotes && maxVotes > 0;
+        }
+
+        return Task.FromResult(new PublicResultsViewModel
         {
             Election = seeds.Election,
-            Results = resultRows,
-            TotalVotes = totalVotes,
-            PopulationTurnoutPercentage = seeds.Election.TotalPopulation == 0
-                ? 0
-                : Math.Round((decimal)totalVotes / seeds.Election.TotalPopulation * 100, 2),
-            ElectionOpen = DateTime.UtcNow >= seeds.Election.StartsAtUtc && DateTime.UtcNow <= seeds.Election.EndsAtUtc,
-            GeneratedAtUtc = DateTime.UtcNow
+            CandidateResults = resultRows,
+            Statistics = new PollStatistics
+            {
+                ElectionId = seeds.Election.Id,
+                TotalVotesCast = totalVotes,
+                AcceptedVotes = totalVotes,
+                EligibleVoterCount = seeds.Election.TotalPopulation,
+                DistinctVoterCount = totalVotes,
+                ElectionOpen = seeds.Election.IsVotingOpen(DateTime.UtcNow),
+                GeneratedAtUtc = DateTime.UtcNow,
+                VotingRules = seeds.Election.VotingRules
+            }
         });
     }
 }

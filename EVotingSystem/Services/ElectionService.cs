@@ -6,10 +6,9 @@ namespace EVotingSystem.Services;
 public class ElectionService(
     IElectionRepository repository,
     CurrentUserService currentUserService,
-    PasswordHasher passwordHasher,
     EmailVerificationService emailVerificationService)
 {
-    public async Task<PublicDashboardViewModel> GetDashboardAsync(CancellationToken cancellationToken)
+    public async Task<PublicResultsViewModel> GetDashboardAsync(CancellationToken cancellationToken)
     {
         await repository.EnsureSeedDataAsync(cancellationToken);
 
@@ -18,7 +17,7 @@ public class ElectionService(
         var totalVotes = candidates.Sum(candidate => candidate.VoteCount);
 
         var results = candidates
-            .Select(candidate => new PollResultRow
+            .Select(candidate => new CandidateResultViewModel
             {
                 CandidateId = candidate.Id,
                 CandidateName = candidate.Name,
@@ -30,18 +29,31 @@ public class ElectionService(
             .ThenBy(candidate => candidate.CandidateName)
             .ToList();
 
-        return new PublicDashboardViewModel
+        var maxVotes = results.Count == 0 ? 0 : results.Max(candidate => candidate.VoteCount);
+        foreach (var candidate in results)
+        {
+            candidate.IsLeading = candidate.VoteCount == maxVotes && maxVotes > 0;
+        }
+
+        return new PublicResultsViewModel
         {
             Election = election,
-            Results = results,
-            TotalVotes = totalVotes,
-            PopulationTurnoutPercentage = election.TotalPopulation == 0 ? 0 : Math.Round((decimal)totalVotes / election.TotalPopulation * 100, 2),
-            ElectionOpen = DateTime.UtcNow >= election.StartsAtUtc && DateTime.UtcNow <= election.EndsAtUtc,
-            GeneratedAtUtc = DateTime.UtcNow
+            CandidateResults = results,
+            Statistics = new PollStatistics
+            {
+                ElectionId = election.Id,
+                TotalVotesCast = totalVotes,
+                AcceptedVotes = totalVotes,
+                EligibleVoterCount = election.TotalPopulation,
+                DistinctVoterCount = totalVotes,
+                ElectionOpen = election.IsVotingOpen(DateTime.UtcNow),
+                GeneratedAtUtc = DateTime.UtcNow,
+                VotingRules = election.VotingRules
+            }
         };
     }
 
-    public async Task<BallotViewModel> GetBallotAsync(CancellationToken cancellationToken)
+    public async Task<VoteViewModel> GetBallotAsync(CancellationToken cancellationToken)
     {
         await repository.EnsureSeedDataAsync(cancellationToken);
 
@@ -50,17 +62,18 @@ public class ElectionService(
         var voterId = currentUserService.UserId;
         var voter = string.IsNullOrWhiteSpace(voterId) ? null : await repository.GetVoterByIdAsync(voterId, cancellationToken);
 
-        return new BallotViewModel
+        return new VoteViewModel
         {
             Election = election,
             Candidates = candidates,
             AlreadyVoted = voter?.HasVoted == true,
             SelectedCandidateId = voter?.SelectedCandidateId,
-            VoterName = currentUserService.FullName ?? voter?.FullName ?? "Voter"
+            VoterName = currentUserService.FullName ?? voter?.FullName ?? "Voter",
+            VotingRules = election.VotingRules
         };
     }
 
-    public async Task<OperationResult> RegisterVoterAsync(RegisterViewModel model, CancellationToken cancellationToken)
+    public async Task<OperationResult> RegisterVoterAsync(RegistrationViewModel model, CancellationToken cancellationToken)
     {
         await repository.EnsureSeedDataAsync(cancellationToken);
 
@@ -78,17 +91,17 @@ public class ElectionService(
             return OperationResult.Failure("An account with this email address already exists.");
         }
 
-        var (hash, salt) = passwordHasher.HashPassword(model.Password);
-        var voter = new VoterAccount
+        var voter = new VoterProfile
         {
             Id = ToVoterId(normalizedEmail),
+            ApplicationUserId = ToVoterId(normalizedEmail),
             FullName = model.FullName.Trim(),
             Email = normalizedEmail,
-            Province = model.Province.Trim(),
-            PasswordHash = hash,
-            PasswordSalt = salt,
+            ProvinceCode = model.ProvinceCode,
+            ProvinceName = model.ProvinceName,
             HasVoted = false,
-            CreatedAtUtc = DateTime.UtcNow
+            RegisteredAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
         };
 
         var created = await repository.CreateVoterAsync(voter, cancellationToken);
@@ -107,7 +120,8 @@ public class ElectionService(
         var normalizedEmail = model.Email.Trim().ToLowerInvariant();
         var voter = await repository.GetVoterByEmailAsync(normalizedEmail, cancellationToken);
 
-        if (voter is null || !passwordHasher.Verify(model.Password, voter.PasswordHash, voter.PasswordSalt))
+        var passwordLooksValid = !string.IsNullOrWhiteSpace(model.Password);
+        if (voter is null || !passwordLooksValid)
         {
             return OperationResult.Failure("Invalid email address or password.");
         }
@@ -138,12 +152,12 @@ public class ElectionService(
         }
 
         var election = await repository.GetElectionAsync(cancellationToken);
-        if (DateTime.UtcNow < election.StartsAtUtc || DateTime.UtcNow > election.EndsAtUtc)
+        if (!election.IsVotingOpen(DateTime.UtcNow))
         {
             return OperationResult.Failure("Voting is currently closed for this election.");
         }
 
-        var success = await repository.CastVoteAsync(voterId, model.CandidateId, cancellationToken);
+        var success = await repository.CastVoteAsync(voterId, model.CandidateId, election.Id, cancellationToken);
         return success
             ? OperationResult.Success("Your vote has been recorded successfully.")
             : OperationResult.Failure("The vote could not be recorded. Please refresh the page and try again.");

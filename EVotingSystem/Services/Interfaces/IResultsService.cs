@@ -4,5 +4,5 @@ namespace EVotingSystem.Services.Interfaces;
 
 public interface IResultsService
 {
-    Task<PublicDashboardViewModel> GetPublicDashboardAsync(CancellationToken cancellationToken);
+    Task<PublicResultsViewModel> GetPublicDashboardAsync(CancellationToken cancellationToken);
 }

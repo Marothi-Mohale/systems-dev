@@ -48,20 +48,20 @@ public class FirestoreElectionRepository(FirestoreRestClient firestore, IOptions
             .ToList();
     }
 
-    public async Task<VoterAccount?> GetVoterByEmailAsync(string email, CancellationToken cancellationToken)
+    public async Task<VoterProfile?> GetVoterByEmailAsync(string email, CancellationToken cancellationToken)
     {
         var sanitizedId = ToDocumentId(email);
         var document = await firestore.GetDocumentAsync($"voters/{sanitizedId}", cancellationToken);
         return document is null ? null : ParseVoter(document.RootElement);
     }
 
-    public async Task<VoterAccount?> GetVoterByIdAsync(string voterId, CancellationToken cancellationToken)
+    public async Task<VoterProfile?> GetVoterByIdAsync(string voterId, CancellationToken cancellationToken)
     {
         var document = await firestore.GetDocumentAsync($"voters/{voterId}", cancellationToken);
         return document is null ? null : ParseVoter(document.RootElement);
     }
 
-    public async Task<bool> CreateVoterAsync(VoterAccount voter, CancellationToken cancellationToken)
+    public async Task<bool> CreateVoterAsync(VoterProfile voter, CancellationToken cancellationToken)
     {
         return await firestore.CreateDocumentAsync("voters", voter.Id, BuildDocument(voter), cancellationToken);
     }
@@ -83,7 +83,7 @@ public class FirestoreElectionRepository(FirestoreRestClient firestore, IOptions
         return true;
     }
 
-    public async Task<bool> CastVoteAsync(string voterId, string candidateId, CancellationToken cancellationToken)
+    public async Task<bool> CastVoteAsync(string voterId, string candidateId, string electionId, CancellationToken cancellationToken)
     {
         using var voterDocument = await firestore.GetDocumentAsync($"voters/{voterId}", cancellationToken);
         using var candidateDocument = await firestore.GetDocumentAsync($"candidates/{candidateId}", cancellationToken);
@@ -113,15 +113,18 @@ public class FirestoreElectionRepository(FirestoreRestClient firestore, IOptions
                 {
                     update = BuildDocument(new Dictionary<string, object?>
                     {
+                        ["applicationUserId"] = voter.ApplicationUserId,
                         ["fullName"] = voter.FullName,
                         ["email"] = voter.Email,
-                        ["province"] = voter.Province,
-                        ["passwordHash"] = voter.PasswordHash,
-                        ["passwordSalt"] = voter.PasswordSalt,
+                        ["provinceCode"] = voter.ProvinceCode,
+                        ["provinceName"] = voter.ProvinceName,
+                        ["isEligibleToVote"] = voter.IsEligibleToVote,
                         ["hasVoted"] = true,
                         ["selectedCandidateId"] = candidateId,
-                        ["createdAtUtc"] = voter.CreatedAtUtc,
-                        ["lastLoginUtc"] = voter.LastLoginUtc
+                        ["registeredAtUtc"] = voter.RegisteredAtUtc,
+                        ["updatedAtUtc"] = DateTime.UtcNow,
+                        ["lastLoginAtUtc"] = voter.LastLoginAtUtc,
+                        ["lastVoteAtUtc"] = DateTime.UtcNow
                     }, GetDocumentName($"voters/{voterId}")),
                     currentDocument = new
                     {
@@ -152,7 +155,11 @@ public class FirestoreElectionRepository(FirestoreRestClient firestore, IOptions
                     {
                         ["voterId"] = voterId,
                         ["candidateId"] = candidateId,
-                        ["castAtUtc"] = DateTime.UtcNow
+                        ["electionId"] = electionId,
+                        ["status"] = "accepted",
+                        ["votingChannel"] = "web",
+                        ["castAtUtc"] = DateTime.UtcNow,
+                        ["recordedAtUtc"] = DateTime.UtcNow
                     }, GetDocumentName($"votes/{voteId}"))
                 }
             },
@@ -169,11 +176,18 @@ public class FirestoreElectionRepository(FirestoreRestClient firestore, IOptions
         return new Candidate
         {
             Id = GetDocumentId(document),
+            ElectionId = GetNullableString(fields, "electionId") ?? "default-election",
             Name = GetString(fields, "name"),
             Party = GetString(fields, "party"),
             Slogan = GetString(fields, "slogan"),
             Biography = GetString(fields, "biography"),
-            VoteCount = GetInt(fields, "voteCount")
+            VoteCount = GetInt(fields, "voteCount"),
+            IsActive = !fields.TryGetProperty("isActive", out var isActiveElement) || isActiveElement.GetProperty("booleanValue").GetBoolean(),
+            DisplayOrder = GetInt(fields, "displayOrder"),
+            ProvinceCode = GetNullableString(fields, "provinceCode"),
+            ProvinceName = GetNullableString(fields, "provinceName"),
+            CreatedAtUtc = GetNullableDateTime(fields, "createdAtUtc") ?? DateTime.UtcNow,
+            UpdatedAtUtc = GetNullableDateTime(fields, "updatedAtUtc") ?? DateTime.UtcNow
         };
     }
 
@@ -191,21 +205,24 @@ public class FirestoreElectionRepository(FirestoreRestClient firestore, IOptions
         };
     }
 
-    private static VoterAccount ParseVoter(JsonElement document)
+    private static VoterProfile ParseVoter(JsonElement document)
     {
         var fields = document.GetProperty("fields");
-        return new VoterAccount
+        return new VoterProfile
         {
             Id = GetDocumentId(document),
+            ApplicationUserId = GetNullableString(fields, "applicationUserId") ?? GetDocumentId(document),
             FullName = GetString(fields, "fullName"),
             Email = GetString(fields, "email"),
-            Province = GetString(fields, "province"),
-            PasswordHash = GetString(fields, "passwordHash"),
-            PasswordSalt = GetString(fields, "passwordSalt"),
+            ProvinceCode = GetNullableString(fields, "provinceCode"),
+            ProvinceName = GetNullableString(fields, "provinceName"),
+            IsEligibleToVote = !fields.TryGetProperty("isEligibleToVote", out var eligibleElement) || eligibleElement.GetProperty("booleanValue").GetBoolean(),
             HasVoted = GetBool(fields, "hasVoted"),
             SelectedCandidateId = GetNullableString(fields, "selectedCandidateId"),
-            CreatedAtUtc = GetDateTime(fields, "createdAtUtc"),
-            LastLoginUtc = GetNullableDateTime(fields, "lastLoginUtc")
+            RegisteredAtUtc = GetNullableDateTime(fields, "registeredAtUtc") ?? GetDateTime(fields, "createdAtUtc"),
+            UpdatedAtUtc = GetNullableDateTime(fields, "updatedAtUtc") ?? DateTime.UtcNow,
+            LastLoginAtUtc = GetNullableDateTime(fields, "lastLoginAtUtc") ?? GetNullableDateTime(fields, "lastLoginUtc"),
+            LastVoteAtUtc = GetNullableDateTime(fields, "lastVoteAtUtc")
         };
     }
 
@@ -222,25 +239,35 @@ public class FirestoreElectionRepository(FirestoreRestClient firestore, IOptions
     private object BuildDocument(Candidate candidate) =>
         BuildDocument(new Dictionary<string, object?>
         {
+            ["electionId"] = candidate.ElectionId,
             ["name"] = candidate.Name,
             ["party"] = candidate.Party,
             ["slogan"] = candidate.Slogan,
             ["biography"] = candidate.Biography,
-            ["voteCount"] = candidate.VoteCount
+            ["voteCount"] = candidate.VoteCount,
+            ["isActive"] = candidate.IsActive,
+            ["displayOrder"] = candidate.DisplayOrder,
+            ["provinceCode"] = candidate.ProvinceCode,
+            ["provinceName"] = candidate.ProvinceName,
+            ["createdAtUtc"] = candidate.CreatedAtUtc,
+            ["updatedAtUtc"] = candidate.UpdatedAtUtc
         });
 
-    private object BuildDocument(VoterAccount voter) =>
+    private object BuildDocument(VoterProfile voter) =>
         BuildDocument(new Dictionary<string, object?>
         {
+            ["applicationUserId"] = voter.ApplicationUserId,
             ["fullName"] = voter.FullName,
             ["email"] = voter.Email,
-            ["province"] = voter.Province,
-            ["passwordHash"] = voter.PasswordHash,
-            ["passwordSalt"] = voter.PasswordSalt,
+            ["provinceCode"] = voter.ProvinceCode,
+            ["provinceName"] = voter.ProvinceName,
+            ["isEligibleToVote"] = voter.IsEligibleToVote,
             ["hasVoted"] = voter.HasVoted,
             ["selectedCandidateId"] = voter.SelectedCandidateId,
-            ["createdAtUtc"] = voter.CreatedAtUtc,
-            ["lastLoginUtc"] = voter.LastLoginUtc
+            ["registeredAtUtc"] = voter.RegisteredAtUtc,
+            ["updatedAtUtc"] = voter.UpdatedAtUtc,
+            ["lastLoginAtUtc"] = voter.LastLoginAtUtc,
+            ["lastVoteAtUtc"] = voter.LastVoteAtUtc
         });
 
     private object BuildDocument(Dictionary<string, object?> values, string? name = null)

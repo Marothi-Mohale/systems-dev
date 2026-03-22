@@ -10,7 +10,7 @@ public class InMemoryElectionRepository(IOptions<SeedOptions> seedOptions) : IEl
     private bool _seeded;
     private ElectionDefinition _election = new();
     private readonly Dictionary<string, Candidate> _candidates = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, VoterAccount> _voters = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, VoterProfile> _voters = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, string> _emailIndex = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<VoteRecord> _votes = [];
 
@@ -26,6 +26,7 @@ public class InMemoryElectionRepository(IOptions<SeedOptions> seedOptions) : IEl
             _election = seedOptions.Value.Election;
             foreach (var candidate in seedOptions.Value.Candidates)
             {
+                candidate.ElectionId = _election.Id;
                 _candidates[candidate.Id] = Clone(candidate);
             }
 
@@ -51,20 +52,20 @@ public class InMemoryElectionRepository(IOptions<SeedOptions> seedOptions) : IEl
         }
     }
 
-    public Task<VoterAccount?> GetVoterByEmailAsync(string email, CancellationToken cancellationToken)
+    public Task<VoterProfile?> GetVoterByEmailAsync(string email, CancellationToken cancellationToken)
     {
         lock (_lock)
         {
             if (_emailIndex.TryGetValue(email, out var voterId) && _voters.TryGetValue(voterId, out var voter))
             {
-                return Task.FromResult<VoterAccount?>(Clone(voter));
+                return Task.FromResult<VoterProfile?>(Clone(voter));
             }
         }
 
-        return Task.FromResult<VoterAccount?>(null);
+        return Task.FromResult<VoterProfile?>(null);
     }
 
-    public Task<VoterAccount?> GetVoterByIdAsync(string voterId, CancellationToken cancellationToken)
+    public Task<VoterProfile?> GetVoterByIdAsync(string voterId, CancellationToken cancellationToken)
     {
         lock (_lock)
         {
@@ -72,7 +73,7 @@ public class InMemoryElectionRepository(IOptions<SeedOptions> seedOptions) : IEl
         }
     }
 
-    public Task<bool> CreateVoterAsync(VoterAccount voter, CancellationToken cancellationToken)
+    public Task<bool> CreateVoterAsync(VoterProfile voter, CancellationToken cancellationToken)
     {
         lock (_lock)
         {
@@ -96,34 +97,40 @@ public class InMemoryElectionRepository(IOptions<SeedOptions> seedOptions) : IEl
                 return Task.FromResult(false);
             }
 
-            voter.LastLoginUtc = lastLoginUtc;
+            voter.LastLoginAtUtc = lastLoginUtc;
+            voter.UpdatedAtUtc = DateTime.UtcNow;
             return Task.FromResult(true);
         }
     }
 
-    public Task<bool> CastVoteAsync(string voterId, string candidateId, CancellationToken cancellationToken)
+    public Task<bool> CastVoteAsync(string voterId, string candidateId, string electionId, CancellationToken cancellationToken)
     {
         lock (_lock)
         {
-            if (!_voters.TryGetValue(voterId, out var voter) || voter.HasVoted)
+            if (!_voters.TryGetValue(voterId, out var voter) || voter.HasVoted || !voter.IsEligibleToVote)
             {
                 return Task.FromResult(false);
             }
 
-            if (!_candidates.TryGetValue(candidateId, out var candidate))
+            if (!_candidates.TryGetValue(candidateId, out var candidate) || !string.Equals(candidate.ElectionId, electionId, StringComparison.OrdinalIgnoreCase))
             {
                 return Task.FromResult(false);
             }
 
             voter.HasVoted = true;
             voter.SelectedCandidateId = candidateId;
+            voter.LastVoteAtUtc = DateTime.UtcNow;
+            voter.UpdatedAtUtc = DateTime.UtcNow;
             candidate.VoteCount += 1;
+            candidate.UpdatedAtUtc = DateTime.UtcNow;
             _votes.Add(new VoteRecord
             {
                 Id = Guid.NewGuid().ToString("N"),
                 VoterId = voterId,
                 CandidateId = candidateId,
-                CastAtUtc = DateTime.UtcNow
+                ElectionId = electionId,
+                CastAtUtc = DateTime.UtcNow,
+                RecordedAtUtc = DateTime.UtcNow
             });
 
             return Task.FromResult(true);
@@ -137,7 +144,14 @@ public class InMemoryElectionRepository(IOptions<SeedOptions> seedOptions) : IEl
         Party = source.Party,
         Slogan = source.Slogan,
         Biography = source.Biography,
-        VoteCount = source.VoteCount
+        VoteCount = source.VoteCount,
+        ElectionId = source.ElectionId,
+        IsActive = source.IsActive,
+        DisplayOrder = source.DisplayOrder,
+        ProvinceCode = source.ProvinceCode,
+        ProvinceName = source.ProvinceName,
+        CreatedAtUtc = source.CreatedAtUtc,
+        UpdatedAtUtc = source.UpdatedAtUtc
     };
 
     private static ElectionDefinition Clone(ElectionDefinition source) => new()
@@ -150,17 +164,20 @@ public class InMemoryElectionRepository(IOptions<SeedOptions> seedOptions) : IEl
         TotalPopulation = source.TotalPopulation
     };
 
-    private static VoterAccount Clone(VoterAccount source) => new()
+    private static VoterProfile Clone(VoterProfile source) => new()
     {
         Id = source.Id,
+        ApplicationUserId = source.ApplicationUserId,
         FullName = source.FullName,
         Email = source.Email,
-        Province = source.Province,
-        PasswordHash = source.PasswordHash,
-        PasswordSalt = source.PasswordSalt,
+        ProvinceCode = source.ProvinceCode,
+        ProvinceName = source.ProvinceName,
+        IsEligibleToVote = source.IsEligibleToVote,
         HasVoted = source.HasVoted,
         SelectedCandidateId = source.SelectedCandidateId,
-        CreatedAtUtc = source.CreatedAtUtc,
-        LastLoginUtc = source.LastLoginUtc
+        RegisteredAtUtc = source.RegisteredAtUtc,
+        UpdatedAtUtc = source.UpdatedAtUtc,
+        LastLoginAtUtc = source.LastLoginAtUtc,
+        LastVoteAtUtc = source.LastVoteAtUtc
     };
 }

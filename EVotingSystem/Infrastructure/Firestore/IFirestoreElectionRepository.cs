@@ -4,6 +4,6 @@ namespace EVotingSystem.Infrastructure.Firestore;
 
 public interface IFirestoreElectionRepository
 {
-    Task<PublicDashboardViewModel> GetPublicDashboardAsync(CancellationToken cancellationToken);
-    Task<BallotViewModel> GetBallotAsync(string voterName, CancellationToken cancellationToken);
+    Task<PublicResultsViewModel> GetPublicDashboardAsync(CancellationToken cancellationToken);
+    Task<VoteViewModel> GetBallotAsync(string voterName, CancellationToken cancellationToken);
 }
