@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 namespace EVotingSystem.Infrastructure.Firestore;
 
 public class FirestoreSeedHostedService(
-    IFirestoreSeedService seedService,
+    IServiceProvider serviceProvider,
     IOptions<FirebaseOptions> firebaseOptions,
     IOptions<FirestoreOptions> firestoreOptions,
     ILogger<FirestoreSeedHostedService> logger) : IHostedService
@@ -28,6 +28,8 @@ public class FirestoreSeedHostedService(
 
         try
         {
+            using var scope = serviceProvider.CreateScope();
+            var seedService = scope.ServiceProvider.GetRequiredService<IFirestoreSeedService>();
             await seedService.EnsureSeedDataAsync(cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)

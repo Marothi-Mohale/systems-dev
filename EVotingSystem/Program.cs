@@ -13,6 +13,7 @@ using Microsoft.Net.Http.Headers;
 using FirestoreElectionRepository = EVotingSystem.Infrastructure.Firestore.FirestoreElectionRepository;
 
 var builder = WebApplication.CreateBuilder(args);
+var requireSecureCookies = !builder.Environment.IsDevelopment();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -42,7 +43,7 @@ builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.Name = "__Host-ElectionPlatform.Antiforgery";
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = requireSecureCookies ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
     options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
     options.HeaderName = "X-CSRF-TOKEN";
 });
@@ -105,7 +106,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.Name = "__Host-ElectionPlatform.Auth";
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = requireSecureCookies ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
     options.Cookie.IsEssential = true;
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
