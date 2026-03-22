@@ -10,6 +10,7 @@ public class VoteViewModel
 
     [Display(Name = "Candidate")]
     [Required(ErrorMessage = "Select a candidate before submitting your ballot.")]
+    [StringLength(64)]
     public string? SelectedCandidateId { get; set; }
 
     public bool AlreadyVoted { get; set; }

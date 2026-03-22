@@ -21,5 +21,10 @@ public class PublicResultsViewModel
     [Range(1, 300)]
     public int AutoRefreshIntervalSeconds { get; set; } = 15;
 
+    [StringLength(240)]
+    public string? StatusNotice { get; set; }
+
+    public bool IsDataUnavailable { get; set; }
+
     public decimal PopulationTurnoutPercentage => Statistics.TurnoutPercentage;
 }

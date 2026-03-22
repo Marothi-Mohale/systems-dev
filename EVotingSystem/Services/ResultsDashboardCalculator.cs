@@ -37,6 +37,8 @@ public class ResultsDashboardCalculator : IResultsDashboardCalculator
             GeneratedAtUtc = source.Statistics.GeneratedAtUtc,
             ZeroVoteState = source.ZeroVoteState,
             NoCandidatesState = source.NoCandidatesState,
+            StatusNotice = source.StatusNotice,
+            IsDataUnavailable = source.IsDataUnavailable,
             PopulationSize = source.PopulationSize,
             CandidateResults = source.CandidateResults
         };

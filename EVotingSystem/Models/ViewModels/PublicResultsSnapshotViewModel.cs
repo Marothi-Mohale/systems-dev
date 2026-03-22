@@ -18,6 +18,11 @@ public class PublicResultsSnapshotViewModel
 
     public bool NoCandidatesState { get; set; }
 
+    [StringLength(240)]
+    public string? StatusNotice { get; set; }
+
+    public bool IsDataUnavailable { get; set; }
+
     [Range(1, int.MaxValue)]
     public int PopulationSize { get; set; } = 100;
 

@@ -16,6 +16,7 @@
   const statusElement = document.querySelector("[data-results-status]");
   const zeroVoteElement = document.querySelector("[data-results-zero-state]");
   const emptyStateElement = document.querySelector("[data-results-empty-state]");
+  const noticeElement = document.querySelector("[data-results-notice]");
   const candidateCards = () => Array.from(document.querySelectorAll("[data-candidate-id]"));
 
   const updateDashboard = async () => {
@@ -59,6 +60,11 @@
 
       if (emptyStateElement) {
         emptyStateElement.classList.toggle("d-none", !payload.noCandidatesState);
+      }
+
+      if (noticeElement) {
+        noticeElement.textContent = payload.statusNotice || "";
+        noticeElement.classList.toggle("d-none", !payload.statusNotice);
       }
 
       for (const candidate of payload.candidateResults) {

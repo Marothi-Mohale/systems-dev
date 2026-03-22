@@ -59,6 +59,18 @@ public class FirestoreElectionRepository(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        if (string.IsNullOrWhiteSpace(voterId))
+        {
+            logger.LogWarning("Vote submission rejected because no voter identifier was provided.");
+            return OperationResult.Failure("Your session could not be verified. Please sign in again.");
+        }
+
+        candidateId = candidateId?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(candidateId))
+        {
+            return OperationResult.Failure("Select one candidate before submitting your ballot.");
+        }
+
         if (!seeds.Election.IsVotingOpen(DateTime.UtcNow))
         {
             return OperationResult.Failure("Voting is currently closed for this election.");

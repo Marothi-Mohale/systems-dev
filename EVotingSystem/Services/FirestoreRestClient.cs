@@ -14,6 +14,7 @@ public class FirestoreRestClient(
     ILogger<FirestoreRestClient> logger) : IFirestoreDocumentClient
 {
     private const string Scope = "https://www.googleapis.com/auth/datastore";
+    private static readonly SemaphoreSlim AccessTokenLock = new(1, 1);
     private string? _accessToken;
     private DateTimeOffset _accessTokenExpiresAt;
 
@@ -130,8 +131,9 @@ public class FirestoreRestClient(
             if (!response.IsSuccessStatusCode)
             {
                 var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                var sanitizedBody = body.Length > 512 ? body[..512] : body;
                 logger.LogWarning("Firestore commit failed with status {StatusCode}.", (int)response.StatusCode);
-                throw new FirestoreException($"Firestore commit failed with status {(int)response.StatusCode}: {body}");
+                throw new FirestoreException($"Firestore commit failed with status {(int)response.StatusCode}: {sanitizedBody}");
             }
         }
         catch (FirestoreException)
@@ -147,6 +149,11 @@ public class FirestoreRestClient(
 
     private async Task<HttpRequestMessage> CreateAuthorizedRequestAsync(HttpMethod method, string url, CancellationToken cancellationToken)
     {
+        if (!Settings.IsConfigured)
+        {
+            throw new FirestoreException("Firestore credentials are not configured securely.");
+        }
+
         var request = new HttpRequestMessage(method, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetAccessTokenAsync(cancellationToken));
         return request;
@@ -159,22 +166,40 @@ public class FirestoreRestClient(
             return _accessToken;
         }
 
-        var assertion = CreateJwtAssertion();
-        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        await AccessTokenLock.WaitAsync(cancellationToken);
+        try
         {
-            ["grant_type"] = "urn:ietf:params:oauth:grant-type:jwt-bearer",
-            ["assertion"] = assertion
-        });
+            if (!string.IsNullOrWhiteSpace(_accessToken) && _accessTokenExpiresAt > DateTimeOffset.UtcNow.AddMinutes(2))
+            {
+                return _accessToken;
+            }
 
-        using var response = await httpClientFactory.CreateClient("Firestore").PostAsync(Settings.TokenUri, content, cancellationToken);
-        response.EnsureSuccessStatusCode();
+            var assertion = CreateJwtAssertion();
+            var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["grant_type"] = "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                ["assertion"] = assertion
+            });
 
-        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
-        _accessToken = document.RootElement.GetProperty("access_token").GetString();
-        var expiresInSeconds = document.RootElement.GetProperty("expires_in").GetInt32();
-        _accessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds);
+            using var response = await httpClientFactory.CreateClient("Firestore").PostAsync(Settings.TokenUri, content, cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-        return _accessToken!;
+            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+            _accessToken = document.RootElement.GetProperty("access_token").GetString();
+            var expiresInSeconds = document.RootElement.GetProperty("expires_in").GetInt32();
+            _accessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds);
+
+            return _accessToken!;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogError(exception, "Failed to acquire a Firestore access token.");
+            throw new FirestoreException("Failed to acquire a Firestore access token.", exception);
+        }
+        finally
+        {
+            AccessTokenLock.Release();
+        }
     }
 
     private string CreateJwtAssertion()

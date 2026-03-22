@@ -17,6 +17,11 @@ public class FirestoreVoteRepository(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        if (string.IsNullOrWhiteSpace(electionId) || string.IsNullOrWhiteSpace(voterId))
+        {
+            return false;
+        }
+
         if (!firebase.IsConfigured)
         {
             return false;

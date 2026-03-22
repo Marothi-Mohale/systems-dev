@@ -6,6 +6,7 @@ public class RegistrationViewModel
 {
     [Required]
     [StringLength(120, MinimumLength = 2)]
+    [RegularExpression(@"^[\p{L}\p{M}][\p{L}\p{M}\p{N}\-'\. ]*$", ErrorMessage = "Full name contains unsupported characters.")]
     [Display(Name = "Full name")]
     public string FullName { get; set; } = string.Empty;
 
@@ -25,6 +26,7 @@ public class RegistrationViewModel
     [Required]
     [DataType(DataType.Password)]
     [StringLength(100, MinimumLength = 8)]
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$", ErrorMessage = "Password must include upper-case, lower-case, and a number.")]
     public string Password { get; set; } = string.Empty;
 
     [Required]

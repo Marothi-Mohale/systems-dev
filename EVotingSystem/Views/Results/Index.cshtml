@@ -41,6 +41,12 @@
     </div>
 </section>
 
+<div class="alert @(Model.IsDataUnavailable ? "alert-warning" : "alert-info") app-alert mb-4 @(string.IsNullOrWhiteSpace(Model.StatusNotice) ? "d-none" : string.Empty)"
+     role="alert"
+     data-results-notice>
+    @Model.StatusNotice
+</div>
+
 <section class="results-stats-grid mb-4">
     <article class="stats-panel">
         <div>

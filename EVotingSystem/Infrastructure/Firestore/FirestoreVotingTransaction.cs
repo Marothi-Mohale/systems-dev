@@ -17,6 +17,16 @@ public class FirestoreVotingTransaction(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        electionId = electionId?.Trim() ?? string.Empty;
+        voterId = voterId?.Trim() ?? string.Empty;
+        candidateId = candidateId?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(electionId) || string.IsNullOrWhiteSpace(voterId) || string.IsNullOrWhiteSpace(candidateId))
+        {
+            logger.LogWarning("Vote transaction rejected because one or more required identifiers were missing.");
+            return OperationResult.Failure("The vote request could not be validated. Please refresh the page and try again.");
+        }
+
         if (!firebase.IsConfigured)
         {
             return OperationResult.Failure("Voting persistence is currently unavailable.");
@@ -45,7 +55,19 @@ public class FirestoreVotingTransaction(
             }
 
             using var transaction = await client.BeginTransactionAsync(cancellationToken);
-            var transactionId = transaction.RootElement.GetProperty("transaction").GetString();
+            if (!transaction.RootElement.TryGetProperty("transaction", out var transactionElement))
+            {
+                logger.LogError("Firestore did not return a transaction identifier for election {ElectionId}.", electionId);
+                return OperationResult.Failure("Voting is temporarily unavailable. Please try again shortly.");
+            }
+
+            var transactionId = transactionElement.GetString();
+            if (string.IsNullOrWhiteSpace(transactionId))
+            {
+                logger.LogError("Firestore returned an empty transaction identifier for election {ElectionId}.", electionId);
+                return OperationResult.Failure("Voting is temporarily unavailable. Please try again shortly.");
+            }
+
             var voteDocumentName = ToDocumentName(voteDocumentPath);
             var candidateDocumentName = ToDocumentName(candidateDocumentPath);
             var statsDocumentName = ToDocumentName(statsDocumentPath);
@@ -83,6 +105,10 @@ public class FirestoreVotingTransaction(
                                     setToServerValue = "REQUEST_TIME"
                                 }
                             }
+                        },
+                        currentDocument = new
+                        {
+                            exists = true
                         }
                     },
                     new
@@ -122,6 +148,10 @@ public class FirestoreVotingTransaction(
                                     setToServerValue = "REQUEST_TIME"
                                 }
                             }
+                        },
+                        currentDocument = new
+                        {
+                            exists = true
                         }
                     }
                 },
