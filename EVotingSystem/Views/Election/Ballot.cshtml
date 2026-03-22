@@ -1,0 +1,52 @@
+@model EVotingSystem.Models.ViewModels.BallotViewModel
+@{
+    ViewData["Title"] = "My Ballot";
+}
+
+<section class="section-heading ballot-heading">
+    <div>
+        <span class="eyebrow">Authenticated Voter</span>
+        <h1>@Model.VoterName's ballot</h1>
+    </div>
+    <p>@Model.Election.Title</p>
+</section>
+
+@if (TempData["StatusMessage"] is string statusMessage)
+{
+    <div class="alert alert-info status-banner">@statusMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))
+{
+    <div class="alert alert-warning status-banner">@Model.ValidationMessage</div>
+}
+
+@if (Model.AlreadyVoted)
+{
+    <section class="confirmation-panel">
+        <h2>Vote already recorded</h2>
+        <p>You have already cast your ballot. This platform enforces one vote per registered voter.</p>
+        <a class="btn btn-secondary-outline" asp-controller="Home" asp-action="Index">View live results</a>
+    </section>
+}
+else
+{
+    <form asp-action="Vote" method="post" class="ballot-grid">
+        @foreach (var candidate in Model.Candidates)
+        {
+            <label class="ballot-card">
+                <input type="radio" name="CandidateId" value="@candidate.Id" />
+                <span class="ballot-card-body">
+                    <span class="eyebrow">@candidate.Party</span>
+                    <strong>@candidate.Name</strong>
+                    <span>@candidate.Slogan</span>
+                    <small>@candidate.Biography</small>
+                </span>
+            </label>
+        }
+
+        <div class="ballot-actions">
+            <button type="submit" class="btn btn-accent">Cast my vote</button>
+        </div>
+    </form>
+}

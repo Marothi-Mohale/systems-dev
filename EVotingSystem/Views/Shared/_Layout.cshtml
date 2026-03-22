@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EVotingSystem</title>
+    <script type="importmap"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/EVotingSystem.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="page-shell">
+        <header class="site-header">
+            <nav class="site-nav">
+                <a class="brand-mark" asp-controller="Home" asp-action="Index">
+                    <span class="brand-kicker">PSystem</span>
+                    <strong>EVoting</strong>
+                </a>
+                <div class="nav-links">
+                    <a asp-controller="Home" asp-action="Index">Results</a>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a asp-controller="Election" asp-action="Ballot">My Ballot</a>
+                        <form asp-controller="Account" asp-action="Logout" method="post">
+                            <button type="submit" class="nav-button">Logout</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Register">Register</a>
+                        <a asp-controller="Account" asp-action="Login">Login</a>
+                    }
+                </div>
+            </nav>
+        </header>
+
+        <main class="content-shell">
+            @RenderBody()
+        </main>
+
+        <footer class="site-footer">
+            <span>Prototype election platform built with ASP.NET Core MVC and Firebase-ready NoSQL integration.</span>
+        </footer>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

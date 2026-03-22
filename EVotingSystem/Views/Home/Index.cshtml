@@ -1,0 +1,88 @@
+@model EVotingSystem.Models.ViewModels.PublicDashboardViewModel
+@{
+    ViewData["Title"] = "Election Dashboard";
+}
+
+<section class="hero-panel">
+    <div class="hero-copy">
+        <span class="eyebrow">INF4027W Prototype System</span>
+        <h1>@Model.Election.Title</h1>
+        <p class="lead">@Model.Election.Description</p>
+        <div class="hero-meta">
+            <div>
+                <span class="meta-label">Status</span>
+                <strong>@(Model.ElectionOpen ? "Voting Open" : "Voting Closed")</strong>
+            </div>
+            <div>
+                <span class="meta-label">Window</span>
+                <strong>@Model.Election.StartsAtUtc.ToString("dd MMM yyyy") - @Model.Election.EndsAtUtc.ToString("dd MMM yyyy")</strong>
+            </div>
+            <div>
+                <span class="meta-label">Population</span>
+                <strong>@Model.Election.TotalPopulation voters</strong>
+            </div>
+        </div>
+        <div class="hero-actions">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a class="btn btn-accent" asp-controller="Election" asp-action="Ballot">Open My Ballot</a>
+            }
+            else
+            {
+                <a class="btn btn-accent" asp-controller="Account" asp-action="Register">Register To Vote</a>
+                <a class="btn btn-secondary-outline" asp-controller="Account" asp-action="Login">Sign In</a>
+            }
+        </div>
+    </div>
+    <div class="hero-stats">
+        <div class="stat-card">
+            <span>Total votes cast</span>
+            <strong>@Model.TotalVotes</strong>
+        </div>
+        <div class="stat-card">
+            <span>Population turnout</span>
+            <strong>@Model.PopulationTurnoutPercentage%</strong>
+        </div>
+        <div class="stat-card">
+            <span>Last updated</span>
+            <strong>@Model.GeneratedAtUtc.ToString("HH:mm:ss") UTC</strong>
+        </div>
+    </div>
+</section>
+
+@if (TempData["StatusMessage"] is string statusMessage)
+{
+    <div class="alert alert-info status-banner">@statusMessage</div>
+}
+
+<section class="results-panel">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">Live Poll Results</span>
+            <h2>Public real-time election trends</h2>
+        </div>
+        <p>Any visitor can monitor the current percentages, total ballots cast, and the share of the simulated population that has voted.</p>
+    </div>
+
+    <div class="results-grid">
+        @foreach (var result in Model.Results)
+        {
+            <article class="candidate-card">
+                <div class="candidate-card-header">
+                    <div>
+                        <h3>@result.CandidateName</h3>
+                        <p>@result.Party</p>
+                    </div>
+                    <span class="result-pill">@result.VotePercentage%</span>
+                </div>
+                <div class="progress-shell">
+                    <div class="progress-bar" style="width: @result.VotePercentage%;"></div>
+                </div>
+                <div class="candidate-card-footer">
+                    <span>@result.VoteCount vote(s)</span>
+                    <span>@result.VotePercentage% of votes cast</span>
+                </div>
+            </article>
+        }
+    </div>
+</section>
