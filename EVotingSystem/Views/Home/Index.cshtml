@@ -1,72 +1,126 @@
-@model EVotingSystem.Models.ViewModels.PublicResultsViewModel
 @{
-    ViewData["Title"] = "Public Results";
+    ViewData["Title"] = "Home";
 }
 
-<section class="hero-card mb-4 mb-lg-5">
+<section class="hero-card landing-hero mb-4 mb-lg-5">
     <div class="row g-4 align-items-center">
         <div class="col-lg-7">
-            <span class="eyebrow">Public Election Dashboard</span>
-            <h1 class="display-5 fw-bold mb-3">@Model.Election.Title</h1>
-            <p class="lead text-secondary mb-4">@Model.Election.Description</p>
-            <div class="d-flex flex-wrap gap-3">
+            <span class="eyebrow">Academic Demo Platform</span>
+            <h1 class="display-3 fw-bold mb-3">A modern digital election experience built with ASP.NET Core MVC.</h1>
+            <p class="lead text-secondary mb-4">Election Platform demonstrates secure registration, authenticated voting, Firestore-backed candidate data, and live public results in a clean presentation-ready interface.</p>
+            <div class="d-flex flex-wrap gap-3 mb-4">
                 <a class="btn btn-primary btn-lg rounded-pill px-4" asp-controller="Account" asp-action="Register">Register to Vote</a>
-                <a class="btn btn-outline-dark btn-lg rounded-pill px-4" asp-controller="Account" asp-action="Login">Voter Login</a>
+                <a class="btn btn-outline-dark btn-lg rounded-pill px-4" asp-controller="Results" asp-action="Index">View Live Results</a>
+            </div>
+            <div class="landing-highlights">
+                <span class="landing-pill">Identity-based authentication</span>
+                <span class="landing-pill">Firestore candidate data</span>
+                <span class="landing-pill">One voter, one vote</span>
+                <span class="landing-pill">Live public dashboard</span>
             </div>
         </div>
         <div class="col-lg-5">
-            <div class="stats-panel">
-                <div>
-                    <span class="stat-label">Total Votes</span>
-                    <strong class="stat-value">@Model.Statistics.TotalVotesCast</strong>
+            <div class="landing-showcase">
+                <div class="showcase-panel">
+                    <span class="stat-label">Platform Focus</span>
+                    <strong class="stat-value">Trust, clarity, and speed</strong>
+                    <p class="text-secondary mb-0">Designed for clean demos, readable flows, and strong separation between UI, services, and persistence.</p>
                 </div>
-                <div>
-                    <span class="stat-label">Turnout</span>
-                    <strong class="stat-value">@Model.Statistics.TurnoutPercentage%</strong>
-                </div>
-                <div>
-                    <span class="stat-label">Election Status</span>
-                    <strong class="stat-value">@(Model.Statistics.ElectionOpen ? "Open" : "Closed")</strong>
-                </div>
-                <div>
-                    <span class="stat-label">Last Refreshed</span>
-                    <strong class="stat-value">@Model.Statistics.GeneratedAtUtc.ToLocalTime().ToString("g")</strong>
+                <div class="showcase-grid">
+                    <div class="summary-metric">
+                        <span class="stat-label">Population Baseline</span>
+                        <strong class="stat-value">100</strong>
+                    </div>
+                    <div class="summary-metric">
+                        <span class="stat-label">Voting Mode</span>
+                        <strong class="stat-value small-value">Single-candidate ballot</strong>
+                    </div>
+                    <div class="summary-metric">
+                        <span class="stat-label">Results View</span>
+                        <strong class="stat-value small-value">Public and live</strong>
+                    </div>
+                    <div class="summary-metric">
+                        <span class="stat-label">Auth Flow</span>
+                        <strong class="stat-value small-value">Mailcheck + Identity</strong>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<section class="row g-4">
-    @foreach (var result in Model.CandidateResults)
-    {
-        <div class="col-12 col-lg-4">
-            <article class="candidate-card h-100">
-                <span class="candidate-party">@result.Party</span>
-                <h2 class="h4 mb-3">@result.CandidateName</h2>
-                <div class="progress result-progress mb-3" role="progressbar" aria-label="@result.CandidateName vote share" aria-valuenow="@result.VotePercentage" aria-valuemin="0" aria-valuemax="100">
-                    <div class="progress-bar" style="width: @result.VotePercentage%;"></div>
-                </div>
-                <div class="d-flex justify-content-between text-secondary">
-                    <span>@result.VoteCount votes</span>
-                    <span>@result.VotePercentage%</span>
-                </div>
-            </article>
-        </div>
-    }
+<section class="row g-4 mb-4 mb-lg-5">
+    <div class="col-12 col-lg-4">
+        <article class="feature-panel h-100">
+            <span class="eyebrow">1. Register</span>
+            <h2 class="h3 mb-3">Validated onboarding</h2>
+            <p class="text-secondary mb-0">New users register with name, email, password, and optional province. Email validation happens before account creation to reduce bad registrations.</p>
+        </article>
+    </div>
+    <div class="col-12 col-lg-4">
+        <article class="feature-panel h-100">
+            <span class="eyebrow">2. Vote</span>
+            <h2 class="h3 mb-3">Focused ballot experience</h2>
+            <p class="text-secondary mb-0">Authenticated voters see a mobile-friendly ballot with clear candidate cards, single selection, and strong one-vote-only rules.</p>
+        </article>
+    </div>
+    <div class="col-12 col-lg-4">
+        <article class="feature-panel h-100">
+            <span class="eyebrow">3. Publish</span>
+            <h2 class="h3 mb-3">Presentation-ready results</h2>
+            <p class="text-secondary mb-0">Guests and markers can watch turnout, candidate standings, and vote share through a polished public dashboard that refreshes automatically.</p>
+        </article>
+    </div>
 </section>
 
-<section class="row g-4 mt-1">
-    <div class="col-lg-6">
-        <div class="feature-panel h-100">
-            <h2 class="h4">Architecture-ready starter</h2>
-            <p class="text-secondary mb-0">Identity, configuration, logging, and global exception handling are wired up so Firestore repositories and Mailcheck.ai validation can be integrated without restructuring the app later.</p>
+<section class="content-card mb-4 mb-lg-5">
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-6">
+            <span class="eyebrow">Why It Works Well</span>
+            <h2 class="display-6 fw-bold mb-3">A straightforward flow that is easy to explain in a demo.</h2>
+            <p class="text-secondary mb-0">The system keeps roles clear: public visitors can inspect results, registered users can authenticate and vote, and Firestore-backed services keep candidate and result data consistent behind the scenes.</p>
+        </div>
+        <div class="col-lg-6">
+            <div class="results-stats-grid landing-stats-grid">
+                <article class="stats-panel">
+                    <div>
+                        <span class="stat-label">Frontend Stack</span>
+                        <strong class="stat-value small-value">Razor + Bootstrap</strong>
+                    </div>
+                </article>
+                <article class="stats-panel">
+                    <div>
+                        <span class="stat-label">Backend Style</span>
+                        <strong class="stat-value small-value">Service-led MVC</strong>
+                    </div>
+                </article>
+                <article class="stats-panel">
+                    <div>
+                        <span class="stat-label">Persistence</span>
+                        <strong class="stat-value small-value">Firestore-ready</strong>
+                    </div>
+                </article>
+                <article class="stats-panel">
+                    <div>
+                        <span class="stat-label">Demo Quality</span>
+                        <strong class="stat-value small-value">Clean and readable</strong>
+                    </div>
+                </article>
+            </div>
         </div>
     </div>
-    <div class="col-lg-6">
-        <div class="feature-panel h-100">
-            <h2 class="h4">Next integration points</h2>
-            <p class="text-secondary mb-0">Connect candidate reads, voter profiles, and vote transactions to Firestore, then replace the placeholder email validator with the live Mailcheck.ai client.</p>
+</section>
+
+<section class="cta-strip">
+    <div class="row g-3 align-items-center">
+        <div class="col-lg-8">
+            <span class="eyebrow text-white-50">Ready To Explore</span>
+            <h2 class="display-6 fw-bold text-white mb-2">Use the public dashboard for live results, or sign in to cast a ballot.</h2>
+            <p class="mb-0 text-white-50">The interface is optimized for academic demonstration, mobile layouts, and quick comprehension by markers.</p>
+        </div>
+        <div class="col-lg-4 d-flex flex-wrap gap-3 justify-content-lg-end">
+            <a class="btn btn-light btn-lg rounded-pill px-4" asp-controller="Results" asp-action="Index">Open Results</a>
+            <a class="btn btn-outline-light btn-lg rounded-pill px-4" asp-controller="Account" asp-action="Login">Sign In</a>
         </div>
     </div>
 </section>

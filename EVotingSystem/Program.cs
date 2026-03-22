@@ -75,6 +75,7 @@ builder.Services.AddScoped<ICandidateRepository, FirestoreCandidateRepository>()
 builder.Services.AddScoped<IVoteRepository, FirestoreVoteRepository>();
 builder.Services.AddScoped<IElectionStatisticsRepository, FirestoreElectionStatisticsRepository>();
 builder.Services.AddScoped<IVoterProfileRepository, FirestoreVoterProfileRepository>();
+builder.Services.AddScoped<IFirestoreVotingTransaction, FirestoreVotingTransaction>();
 builder.Services.AddScoped<IFirestoreSeedService, FirestoreSeedService>();
 builder.Services.AddScoped<IFirestoreElectionRepository, FirestoreElectionRepository>();
 builder.Services.AddHostedService<FirestoreSeedHostedService>();
@@ -83,6 +84,7 @@ builder.Services.AddHostedService<FirestoreSeedHostedService>();
 // independent from the external API contract and can be tested cleanly.
 builder.Services.AddScoped<IEmailValidationService, MailcheckEmailValidationService>();
 builder.Services.AddScoped<IMailcheckClient, MailcheckClient>();
+builder.Services.AddSingleton<IResultsDashboardCalculator, ResultsDashboardCalculator>();
 builder.Services.AddScoped<IResultsService, ResultsService>();
 builder.Services.AddScoped<IVotingService, VotingService>();
 

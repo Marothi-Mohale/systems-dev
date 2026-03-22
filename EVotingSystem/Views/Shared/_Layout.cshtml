@@ -12,7 +12,7 @@
 </head>
 <body>
     <div class="app-shell">
-        <header class="border-bottom bg-white bg-opacity-75 backdrop-blur sticky-top">
+        <header class="site-header sticky-top">
             <nav class="navbar navbar-expand-lg container py-3">
                 <a class="navbar-brand d-flex flex-column" asp-controller="Home" asp-action="Index">
                     <span class="brand-overline">Civic Tech Prototype</span>
@@ -22,9 +22,12 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="primaryNav">
-                    <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                    <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2 nav-pills-shell">
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">Results</a>
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Results" asp-action="Index">Results</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Home" asp-action="Privacy">Privacy</a>
@@ -58,7 +61,7 @@
         <main class="container py-4 py-lg-5">
             @if (TempData["StatusMessage"] is string statusMessage && !string.IsNullOrWhiteSpace(statusMessage))
             {
-                <div class="alert alert-success shadow-sm" role="alert">
+                <div class="alert alert-success shadow-sm app-alert" role="alert">
                     @statusMessage
                 </div>
             }
@@ -66,10 +69,28 @@
             @RenderBody()
         </main>
 
-        <footer class="border-top py-4 mt-auto bg-white">
-            <div class="container d-flex flex-column flex-lg-row justify-content-between gap-2 small text-secondary">
-                <span>ASP.NET Core MVC starter with Identity, Firestore-ready services, and Mailcheck.ai integration points.</span>
-                <span>Population baseline for turnout calculations: 100</span>
+        <footer class="site-footer mt-auto">
+            <div class="container py-4 py-lg-5">
+                <div class="row g-4 align-items-start">
+                    <div class="col-lg-5">
+                        <span class="brand-overline text-white-50">Election Platform</span>
+                        <h2 class="footer-title mt-2">Professional demo-ready civic technology interface.</h2>
+                        <p class="footer-copy mb-0">Built with ASP.NET Core MVC, Identity, Firestore integration, and a public results experience that is easy for markers and guests to understand.</p>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <h3 class="footer-heading">Explore</h3>
+                        <ul class="footer-links">
+                            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                            <li><a asp-controller="Results" asp-action="Index">Results</a></li>
+                            <li><a asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-6 col-lg-4">
+                        <h3 class="footer-heading">Demo Notes</h3>
+                        <p class="footer-copy mb-2">Population baseline for turnout calculations: 100</p>
+                        <p class="footer-copy mb-0">Suggested static assets: store candidate portraits in <code>wwwroot/images/candidates/</code> and branded illustrations in <code>wwwroot/images/ui/</code>.</p>
+                    </div>
+                </div>
             </div>
         </footer>
     </div>

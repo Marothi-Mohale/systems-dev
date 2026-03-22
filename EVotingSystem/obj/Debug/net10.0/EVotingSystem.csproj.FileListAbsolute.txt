@@ -90,5 +90,5 @@
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/EVotingSystem.pdb
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/EVotingSystem.genruntimeconfig.cache
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/ref/EVotingSystem.dll
-/workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/mtzki86i62-{0}-88q04ockai-88q04ockai.gz
-/workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/b6d59ls7ad-{0}-24fzpmpf0x-24fzpmpf0x.gz
+/workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/mtzki86i62-{0}-72i5itwzye-72i5itwzye.gz
+/workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/b6d59ls7ad-{0}-zm6vidlswz-zm6vidlswz.gz

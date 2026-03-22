@@ -1,17 +1,14 @@
 using System.Diagnostics;
 using EVotingSystem.Models;
-using EVotingSystem.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EVotingSystem.Controllers;
 
-public class HomeController(IResultsService resultsService, ILogger<HomeController> logger) : Controller
+public class HomeController : Controller
 {
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public IActionResult Index()
     {
-        logger.LogInformation("Rendering public election dashboard.");
-        var model = await resultsService.GetPublicDashboardAsync(cancellationToken);
-        return View(model);
+        return View();
     }
 
     public IActionResult Privacy()

@@ -9,6 +9,7 @@ public class FirestoreElectionRepository(
     ICandidateRepository candidateRepository,
     IVoteRepository voteRepository,
     IElectionStatisticsRepository statisticsRepository,
+    IFirestoreVotingTransaction votingTransaction,
     IFirestoreSeedService seedService,
     IOptions<FirebaseOptions> firebaseOptions,
     IOptions<SeedOptions> seedOptions,
@@ -84,39 +85,7 @@ public class FirestoreElectionRepository(
             return OperationResult.Success("Your vote has been recorded successfully.");
         }
 
-        var vote = new VoteRecord
-        {
-            Id = Guid.NewGuid().ToString("N"),
-            ElectionId = seeds.Election.Id,
-            VoterId = voterId,
-            CandidateId = candidate.Id,
-            VotingChannel = "web",
-            Status = "accepted",
-            CastAtUtc = DateTime.UtcNow,
-            RecordedAtUtc = DateTime.UtcNow
-        };
-
-        candidate.VoteCount += 1;
-        candidate.UpdatedAtUtc = DateTime.UtcNow;
-
-        await voteRepository.CreateAsync(vote, cancellationToken);
-        await candidateRepository.UpdateAsync(candidate, cancellationToken);
-
-        var totalVotes = await voteRepository.CountAcceptedVotesAsync(seeds.Election.Id, cancellationToken);
-        await statisticsRepository.UpsertAsync(new PollStatistics
-        {
-            ElectionId = seeds.Election.Id,
-            TotalVotesCast = totalVotes,
-            AcceptedVotes = totalVotes,
-            RejectedVotes = 0,
-            EligibleVoterCount = seeds.Election.TotalPopulation,
-            DistinctVoterCount = totalVotes,
-            ElectionOpen = seeds.Election.IsVotingOpen(DateTime.UtcNow),
-            GeneratedAtUtc = DateTime.UtcNow,
-            VotingRules = seeds.Election.VotingRules
-        }, cancellationToken);
-
-        return OperationResult.Success("Your vote has been recorded successfully.");
+        return await votingTransaction.SubmitVoteAsync(seeds.Election.Id, voterId, candidate.Id, cancellationToken);
     }
 
     public async Task<PublicResultsViewModel> GetPublicDashboardAsync(CancellationToken cancellationToken)

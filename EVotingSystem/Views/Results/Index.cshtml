@@ -1,0 +1,150 @@
+@model EVotingSystem.Models.ViewModels.PublicResultsViewModel
+@{
+    ViewData["Title"] = "Public Results";
+}
+
+<section class="hero-card results-hero mb-4 mb-lg-5"
+         data-results-dashboard
+         data-refresh-url="@Url.Action("Snapshot", "Results")"
+         data-refresh-seconds="@Model.AutoRefreshIntervalSeconds">
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-7">
+            <span class="eyebrow">Public Polling Results Dashboard</span>
+            <h1 class="display-4 fw-bold mb-3">@Model.Election.Title</h1>
+            <p class="lead text-secondary mb-4">@Model.Election.Description</p>
+            <div class="d-flex flex-wrap gap-3 align-items-center">
+                <a class="btn btn-primary btn-lg rounded-pill px-4" asp-controller="Account" asp-action="Register">Register to Vote</a>
+                <a class="btn btn-outline-dark btn-lg rounded-pill px-4" asp-controller="Account" asp-action="Login">Voter Login</a>
+                <span class="results-refresh-pill">Auto-refresh every @Model.AutoRefreshIntervalSeconds seconds</span>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="results-summary-panel">
+                <div class="summary-metric">
+                    <span class="stat-label">Total Votes Cast</span>
+                    <strong class="stat-value" data-results-total-votes>@Model.Statistics.TotalVotesCast</strong>
+                </div>
+                <div class="summary-metric">
+                    <span class="stat-label">Population Turnout</span>
+                    <strong class="stat-value" data-results-turnout>@Model.PopulationTurnoutPercentage%</strong>
+                </div>
+                <div class="summary-metric">
+                    <span class="stat-label">Population Base</span>
+                    <strong class="stat-value">@Model.PopulationSize</strong>
+                </div>
+                <div class="summary-metric">
+                    <span class="stat-label">Last Refreshed</span>
+                    <strong class="stat-value small-value" data-results-generated>@Model.Statistics.GeneratedAtUtc.ToLocalTime().ToString("g")</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="results-stats-grid mb-4">
+    <article class="stats-panel">
+        <div>
+            <span class="stat-label">Votes Cast</span>
+            <strong class="stat-value" data-results-total-votes>@Model.Statistics.TotalVotesCast</strong>
+        </div>
+        <p class="text-secondary mb-0">Current total ballots recorded across all candidates.</p>
+    </article>
+    <article class="stats-panel">
+        <div>
+            <span class="stat-label">Turnout</span>
+            <strong class="stat-value" data-results-turnout>@Model.PopulationTurnoutPercentage%</strong>
+        </div>
+        <p class="text-secondary mb-0">Percentage of the population baseline of @Model.PopulationSize that has voted.</p>
+    </article>
+    <article class="stats-panel">
+        <div>
+            <span class="stat-label">Election Status</span>
+            <strong class="stat-value small-value" data-results-status>@(Model.Statistics.ElectionOpen ? "Open" : "Closed")</strong>
+        </div>
+        <p class="text-secondary mb-0">Public page for guests, markers, and live demo viewing.</p>
+    </article>
+    <article class="stats-panel">
+        <div>
+            <span class="stat-label">Last Refresh</span>
+            <strong class="stat-value small-value" data-results-generated>@Model.Statistics.GeneratedAtUtc.ToLocalTime().ToString("g")</strong>
+        </div>
+        <p class="text-secondary mb-0">The page polls the server periodically to stay close to real-time.</p>
+    </article>
+</section>
+
+<section class="content-card mb-4">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+        <div>
+            <span class="eyebrow">Live Snapshot</span>
+            <h2 class="h3 mb-2">Current standing</h2>
+            <p class="text-secondary mb-0">Each candidate card shows the current vote count and vote share of the total ballots recorded.</p>
+        </div>
+        <div class="results-explainer">
+            <strong>Calculation rule:</strong> percentage = candidate votes / total votes cast.
+        </div>
+    </div>
+</section>
+
+@if (Model.NoCandidatesState)
+{
+    <section class="content-card zero-vote-card mb-4" data-results-empty-state>
+        <span class="eyebrow">No Candidate Data</span>
+        <h2 class="h3 mb-3">Candidates have not been published yet</h2>
+        <p class="text-secondary mb-0">@Model.EmptyStateMessage</p>
+    </section>
+}
+else
+{
+    <section class="content-card zero-vote-card mb-4 @(Model.ZeroVoteState ? string.Empty : "d-none")" data-results-zero-state>
+        <span class="eyebrow">Zero Vote State</span>
+        <h2 class="h3 mb-3">No votes have been cast yet</h2>
+        <p class="text-secondary mb-0">@Model.EmptyStateMessage</p>
+    </section>
+}
+
+@if (!Model.NoCandidatesState)
+{
+    <section class="row g-4" data-results-grid>
+        @foreach (var result in Model.CandidateResults)
+        {
+            <div class="col-12 col-lg-4" data-candidate-id="@result.CandidateId">
+                <article class="candidate-card h-100 results-card @(result.IsLeading ? "results-card-leading" : string.Empty)">
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                        <div>
+                            @if (!string.IsNullOrWhiteSpace(result.Party))
+                            {
+                                <span class="candidate-party">@result.Party</span>
+                            }
+                            else
+                            {
+                                <span class="candidate-party">Independent</span>
+                            }
+                            <h2 class="h4 mb-1">@result.CandidateName</h2>
+                        </div>
+                        <span class="results-badge @(result.IsLeading ? string.Empty : "d-none")" data-candidate-leading="@result.CandidateId">Leading</span>
+                    </div>
+
+                    <div class="progress result-progress mb-3"
+                         role="progressbar"
+                         aria-label="@result.CandidateName vote share"
+                         aria-valuenow="@result.VotePercentage"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        <div class="progress-bar" style="width: @result.VotePercentage%;" data-candidate-progress="@result.CandidateId"></div>
+                    </div>
+
+                    <div class="results-metric-row">
+                        <div>
+                            <span class="stat-label">Vote Count</span>
+                            <strong class="stat-value small-value" data-candidate-votes="@result.CandidateId">@result.VoteCount</strong>
+                        </div>
+                        <div class="text-end">
+                            <span class="stat-label">Vote Share</span>
+                            <strong class="stat-value small-value" data-candidate-share="@result.CandidateId">@result.VotePercentage%</strong>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        }
+    </section>
+}

@@ -3,12 +3,27 @@
     ViewData["Title"] = "Login";
 }
 
-<section class="content-card auth-card">
-    <span class="eyebrow">Voter Login</span>
-    <h1 class="display-6 fw-bold mb-3">Sign in to access your ballot</h1>
-    <p class="text-secondary mb-4">Sign in with the email address and password you used during registration. Identity handles password verification and the authenticated session server-side.</p>
-
-    <form asp-action="Login" method="post" novalidate>
+<section class="row g-4 align-items-stretch auth-layout">
+    <div class="col-lg-5">
+        <article class="hero-card auth-side-panel h-100">
+            <span class="eyebrow">Voter Login</span>
+            <h1 class="display-6 fw-bold mb-3">Sign in to access your ballot</h1>
+            <p class="text-secondary mb-4">Use the email and password you registered with to open your authenticated session and continue to the ballot.</p>
+            <div class="auth-checklist">
+                <div class="summary-metric">
+                    <span class="stat-label">Session</span>
+                    <strong class="stat-value small-value">Server-managed authenticated user session</strong>
+                </div>
+                <div class="summary-metric">
+                    <span class="stat-label">Ballot Access</span>
+                    <strong class="stat-value small-value">Only logged-in users can vote</strong>
+                </div>
+            </div>
+        </article>
+    </div>
+    <div class="col-lg-7">
+        <section class="content-card auth-card auth-form-card h-100">
+            <form asp-action="Login" method="post" novalidate>
         @Html.AntiForgeryToken()
         <input asp-for="ReturnUrl" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -16,6 +31,7 @@
         <div class="mb-3">
             <label asp-for="Email" class="form-label"></label>
             <input asp-for="Email" class="form-control form-control-lg" autocomplete="email" />
+            <div class="form-text">Enter the same validated email address used during registration.</div>
             <span asp-validation-for="Email" class="text-danger"></span>
         </div>
 
@@ -29,7 +45,9 @@
             <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4">Login</button>
             <a class="btn btn-outline-dark btn-lg rounded-pill px-4" asp-action="Register">Create account</a>
         </div>
-    </form>
+            </form>
+        </section>
+    </div>
 </section>
 
 @section Scripts {

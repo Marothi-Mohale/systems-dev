@@ -3,12 +3,31 @@
     ViewData["Title"] = "Register";
 }
 
-<section class="content-card auth-card">
-    <span class="eyebrow">Voter Registration</span>
-    <h1 class="display-6 fw-bold mb-3">Create your voter account</h1>
-    <p class="text-secondary mb-4">Your email is validated with Mailcheck.ai before an account is created. Once registration succeeds, ASP.NET Core Identity signs you in with a secure authenticated session.</p>
-
-    <form asp-action="Register" method="post" novalidate>
+<section class="row g-4 align-items-stretch auth-layout">
+    <div class="col-lg-5">
+        <article class="hero-card auth-side-panel h-100">
+            <span class="eyebrow">Voter Registration</span>
+            <h1 class="display-6 fw-bold mb-3">Create your voter account</h1>
+            <p class="text-secondary mb-4">Register once, validate your email, and access the ballot securely through ASP.NET Core Identity.</p>
+            <div class="auth-checklist">
+                <div class="summary-metric">
+                    <span class="stat-label">Validation</span>
+                    <strong class="stat-value small-value">Mailcheck.ai before account creation</strong>
+                </div>
+                <div class="summary-metric">
+                    <span class="stat-label">Security</span>
+                    <strong class="stat-value small-value">Identity password hashing and session cookies</strong>
+                </div>
+                <div class="summary-metric">
+                    <span class="stat-label">Province</span>
+                    <strong class="stat-value small-value">Optional and future-ready</strong>
+                </div>
+            </div>
+        </article>
+    </div>
+    <div class="col-lg-7">
+        <section class="content-card auth-card auth-form-card h-100">
+            <form asp-action="Register" method="post" novalidate>
         @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
@@ -16,11 +35,13 @@
             <div class="col-12">
                 <label asp-for="FullName" class="form-label"></label>
                 <input asp-for="FullName" class="form-control form-control-lg" autocomplete="name" />
+                <div class="form-text">Use your full legal or academic demo name as it should appear on the voter profile.</div>
                 <span asp-validation-for="FullName" class="text-danger"></span>
             </div>
             <div class="col-12">
                 <label asp-for="Email" class="form-label"></label>
                 <input asp-for="Email" class="form-control form-control-lg" autocomplete="email" />
+                <div class="form-text">Your account is created only after the email passes validation checks.</div>
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
             <div class="col-md-6">
@@ -42,6 +63,7 @@
             <div class="col-md-6">
                 <label asp-for="Password" class="form-label"></label>
                 <input asp-for="Password" class="form-control form-control-lg" autocomplete="new-password" />
+                <div class="form-text">Use at least 8 characters with upper- and lower-case letters plus a digit.</div>
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
             <div class="col-12">
@@ -55,7 +77,9 @@
             <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4">Register</button>
             <a class="btn btn-outline-dark btn-lg rounded-pill px-4" asp-action="Login">Already have an account?</a>
         </div>
-    </form>
+            </form>
+        </section>
+    </div>
 </section>
 
 @section Scripts {

@@ -127,7 +127,16 @@ public class FirestoreRestClient(
             using var request = await CreateAuthorizedRequestAsync(HttpMethod.Post, $"{DocumentRoot}:commit", cancellationToken);
             request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
             using var response = await httpClientFactory.CreateClient("Firestore").SendAsync(request, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                logger.LogWarning("Firestore commit failed with status {StatusCode}.", (int)response.StatusCode);
+                throw new FirestoreException($"Firestore commit failed with status {(int)response.StatusCode}: {body}");
+            }
+        }
+        catch (FirestoreException)
+        {
+            throw;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {

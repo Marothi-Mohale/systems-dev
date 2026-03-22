@@ -45,14 +45,6 @@ public class ElectionController(
             return View(invalidModel);
         }
 
-        if (user.HasVoted)
-        {
-            var existingVoteModel = await votingService.GetBallotAsync(user.Id, user.FullName, cancellationToken);
-            existingVoteModel.AlreadyVoted = true;
-            existingVoteModel.ValidationMessage = "You have already submitted your vote. Only one vote is allowed per voter.";
-            return View(existingVoteModel);
-        }
-
         var result = await votingService.SubmitVoteAsync(user.Id, model.SelectedCandidateId!, cancellationToken);
         if (!result.Succeeded)
         {
@@ -62,10 +54,6 @@ public class ElectionController(
             failedModel.AlreadyVoted = failedModel.AlreadyVoted || user.HasVoted;
             return View(failedModel);
         }
-
-        user.HasVoted = true;
-        user.ActiveElectionId = "2026-national-election";
-        await userManager.UpdateAsync(user);
 
         TempData["StatusMessage"] = result.Message;
         return RedirectToAction(nameof(Ballot));

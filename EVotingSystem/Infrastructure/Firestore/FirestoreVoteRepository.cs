@@ -24,17 +24,9 @@ public class FirestoreVoteRepository(
 
         try
         {
-            using var document = await Client.ListDocumentsAsync(Collections.Votes, cancellationToken);
-            if (!document.RootElement.TryGetProperty("documents", out var documentsElement))
-            {
-                return false;
-            }
-
-            return documentsElement.EnumerateArray()
-                .Select(ParseVoteRecord)
-                .Any(vote => string.Equals(vote.ElectionId, electionId, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(vote.VoterId, voterId, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(vote.Status, "accepted", StringComparison.OrdinalIgnoreCase));
+            var voteId = BuildVoteDocumentId(electionId, voterId);
+            using var document = await Client.GetDocumentAsync($"{Collections.Votes}/{voteId}", cancellationToken);
+            return document is not null;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -124,4 +116,6 @@ public class FirestoreVoteRepository(
             ["castAtUtc"] = vote.CastAtUtc,
             ["recordedAtUtc"] = vote.RecordedAtUtc
         });
+
+    private static string BuildVoteDocumentId(string electionId, string voterId) => $"{electionId}--{voterId}";
 }
