@@ -1,12 +1,13 @@
 using EVotingSystem.Models.Domain;
 using EVotingSystem.Models.ViewModels;
+using EVotingSystem.Services.Interfaces;
 
 namespace EVotingSystem.Services;
 
 public class ElectionService(
     IElectionRepository repository,
     CurrentUserService currentUserService,
-    EmailVerificationService emailVerificationService)
+    IEmailValidationService emailValidationService)
 {
     public async Task<PublicResultsViewModel> GetDashboardAsync(CancellationToken cancellationToken)
     {
@@ -78,10 +79,10 @@ public class ElectionService(
         await repository.EnsureSeedDataAsync(cancellationToken);
 
         var normalizedEmail = model.Email.Trim().ToLowerInvariant();
-        var emailVerification = await emailVerificationService.VerifyAsync(normalizedEmail, cancellationToken);
+        var emailVerification = await emailValidationService.ValidateAsync(normalizedEmail, cancellationToken);
         if (!emailVerification.IsAllowed)
         {
-            return OperationResult.Failure(emailVerification.Message);
+            return OperationResult.Failure(emailVerification.Reason);
         }
 
         var existing = await repository.GetVoterByEmailAsync(normalizedEmail, cancellationToken);

@@ -56,6 +56,12 @@ builder.Services.AddHttpClient("Firestore", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+builder.Services.AddHttpClient("Mailcheck", (serviceProvider, client) =>
+{
+    var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MailCheckOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+});
 
 builder.Services.AddSingleton<FirestoreUserStore>();
 builder.Services.AddSingleton<IUserStore<ApplicationUser>>(serviceProvider => serviceProvider.GetRequiredService<FirestoreUserStore>());
@@ -76,6 +82,7 @@ builder.Services.AddHostedService<FirestoreSeedHostedService>();
 // Mailcheck.ai is wrapped in a service abstraction so registration logic stays
 // independent from the external API contract and can be tested cleanly.
 builder.Services.AddScoped<IEmailValidationService, MailcheckEmailValidationService>();
+builder.Services.AddScoped<IMailcheckClient, MailcheckClient>();
 builder.Services.AddScoped<IResultsService, ResultsService>();
 builder.Services.AddScoped<IVotingService, VotingService>();
 
