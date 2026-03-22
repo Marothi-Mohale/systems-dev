@@ -18,6 +18,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddProblemDetails();
 
 builder.Services.Configure<FirebaseOptions>(builder.Configuration.GetSection(FirebaseOptions.SectionName));
+builder.Services.Configure<FirestoreOptions>(builder.Configuration.GetSection(FirestoreOptions.SectionName));
 builder.Services.Configure<MailCheckOptions>(builder.Configuration.GetSection(MailCheckOptions.SectionName));
 builder.Services.Configure<SeedOptions>(builder.Configuration.GetSection(SeedOptions.SectionName));
 
@@ -39,6 +40,10 @@ builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
 
 builder.Services.AddAuthorization();
+builder.Services.AddHttpClient("Firestore", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 builder.Services.AddSingleton<FirestoreUserStore>();
 builder.Services.AddSingleton<IUserStore<ApplicationUser>>(serviceProvider => serviceProvider.GetRequiredService<FirestoreUserStore>());
@@ -46,9 +51,15 @@ builder.Services.AddSingleton<IUserEmailStore<ApplicationUser>>(serviceProvider 
 builder.Services.AddSingleton<IUserPasswordStore<ApplicationUser>>(serviceProvider => serviceProvider.GetRequiredService<FirestoreUserStore>());
 builder.Services.AddSingleton<IUserSecurityStampStore<ApplicationUser>>(serviceProvider => serviceProvider.GetRequiredService<FirestoreUserStore>());
 
-// Firestore infrastructure is registered behind interfaces so we can swap the
-// in-memory/demo behavior for a real Cloud Firestore implementation later.
-builder.Services.AddSingleton<IFirestoreElectionRepository, FirestoreElectionRepository>();
+builder.Services.AddSingleton<IFirestoreDocumentClient, FirestoreRestClient>();
+builder.Services.AddSingleton<IFirestoreCollectionNameProvider, FirestoreCollectionNameProvider>();
+builder.Services.AddScoped<ICandidateRepository, FirestoreCandidateRepository>();
+builder.Services.AddScoped<IVoteRepository, FirestoreVoteRepository>();
+builder.Services.AddScoped<IElectionStatisticsRepository, FirestoreElectionStatisticsRepository>();
+builder.Services.AddScoped<IVoterProfileRepository, FirestoreVoterProfileRepository>();
+builder.Services.AddScoped<IFirestoreSeedService, FirestoreSeedService>();
+builder.Services.AddScoped<IFirestoreElectionRepository, FirestoreElectionRepository>();
+builder.Services.AddHostedService<FirestoreSeedHostedService>();
 
 // Mailcheck.ai is wrapped in a service abstraction so registration logic stays
 // independent from the external API contract and can be tested cleanly.

@@ -286,7 +286,7 @@ cd /workspaces/systems-dev/EVotingSystem
 HOME=/tmp DOTNET_CLI_HOME=/tmp dotnet run
 ```
 
-If Firebase credentials are not configured, the app uses the in-memory repository so the prototype can still run locally.
+If Firebase credentials are not configured, the MVC app falls back to the `Seed` configuration values so the prototype can still run locally.
 
 ## Firebase setup
 
@@ -295,8 +295,38 @@ Add these values in `appsettings.json` or user secrets:
 - `Firebase:ProjectId`
 - `Firebase:ServiceAccountEmail`
 - `Firebase:ServiceAccountPrivateKey`
+- `Firebase:DatabaseId`
+- `Firestore:SeedOnStartup`
+- `Firestore:Collections:Candidates`
+- `Firestore:Collections:Votes`
+- `Firestore:Collections:ElectionStats`
+- `Firestore:Collections:VoterProfiles`
 
 The private key should be the PEM key from the service account JSON, with newlines preserved or escaped as `\n`.
+
+Example configuration:
+
+```json
+{
+  "Firebase": {
+    "ProjectId": "your-firebase-project-id",
+    "DatabaseId": "(default)",
+    "ServiceAccountEmail": "firebase-adminsdk@example-project.iam.gserviceaccount.com",
+    "ServiceAccountPrivateKey": "-----BEGIN PRIVATE KEY-----\\nYOUR_PRIVATE_KEY_HERE\\n-----END PRIVATE KEY-----\\n",
+    "TokenUri": "https://oauth2.googleapis.com/token"
+  },
+  "Firestore": {
+    "SeedOnStartup": true,
+    "Collections": {
+      "Elections": "elections",
+      "Candidates": "candidates",
+      "Votes": "votes",
+      "ElectionStats": "electionStats",
+      "VoterProfiles": "voterProfiles"
+    }
+  }
+}
+```
 
 ## Email verification setup
 
@@ -310,10 +340,29 @@ The app calls `GET https://api.usercheck.com/email/{email}` with `Authorization:
 
 - `elections`
 - `candidates`
-- `voters`
 - `votes`
+- `electionStats`
+- `voterProfiles`
+
+Collection naming is centralized in `Firestore:Collections`, which keeps Firestore-specific naming concerns out of controllers and higher-level MVC services.
+
+## Firestore integration notes
+
+- `Services/FirestoreRestClient.cs` is the low-level async REST client with bearer-token generation, cancellation support, and structured exception logging.
+- `Infrastructure/Firestore/FirestoreCandidateRepository.cs` reads candidate data from Firestore, which is what the ballot and public results pages use when Firebase is configured.
+- `Infrastructure/Firestore/FirestoreVoteRepository.cs` encapsulates vote writes plus vote existence/count queries.
+- `Infrastructure/Firestore/FirestoreElectionStatisticsRepository.cs` encapsulates `electionStats` access.
+- `Infrastructure/Firestore/FirestoreSeedService.cs` provides idempotent startup seeding for candidate and stats documents.
+- `Infrastructure/Firestore/FirestoreElectionRepository.cs` is the MVC-facing facade that composes the Firestore repositories and falls back to seed configuration only when credentials are intentionally absent.
+
+## Local development vs production
+
+- Local development without Firebase credentials: the MVC app falls back to `Seed` configuration data so pages can still render, and Firestore seeding is skipped.
+- Local development with Firebase credentials: prefer `dotnet user-secrets`, environment variables, or your Codespaces secret store instead of checking service-account material into development config files.
+- Production deployment: inject `Firebase__ProjectId`, `Firebase__ServiceAccountEmail`, and `Firebase__ServiceAccountPrivateKey` through the host environment or secret manager, and scope the service account to only the required Firestore permissions.
+- Production reliability: Firestore failures are logged with collection/document context and surfaced as `FirestoreException`, which keeps Firestore-specific failure handling isolated and testable.
 
 ## Notes
 
 - Election Commission access is intentionally left out, per brief, and simulated through seeded database data.
-- Because this workspace has no Firebase credentials yet, Firestore integration is implemented but not exercised in this environment.
+- Because this workspace has no Firebase credentials in this environment, the Firestore integration compiles and is structured for deployment, but runtime database calls were not exercised here.

@@ -6,6 +6,9 @@ namespace EVotingSystem.Services;
 
 public class VotingService(IFirestoreElectionRepository repository) : IVotingService
 {
-    public Task<VoteViewModel> GetBallotAsync(string voterName, CancellationToken cancellationToken) =>
-        repository.GetBallotAsync(voterName, cancellationToken);
+    public async Task<VoteViewModel> GetBallotAsync(string voterName, CancellationToken cancellationToken)
+    {
+        await repository.EnsureSeedDataAsync(cancellationToken);
+        return await repository.GetBallotAsync(voterName, cancellationToken);
+    }
 }
