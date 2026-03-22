@@ -1,18 +1,26 @@
-using System.Security.Claims;
+using EVotingSystem.Models.Identity;
 using EVotingSystem.Models.ViewModels;
-using EVotingSystem.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using EVotingSystem.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EVotingSystem.Controllers;
 
-public class AccountController(ElectionService electionService) : Controller
+public class AccountController(
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
+    IEmailValidationService emailValidationService,
+    ILogger<AccountController> logger) : Controller
 {
     [HttpGet]
     public IActionResult Register()
     {
-        return User.Identity?.IsAuthenticated == true ? RedirectToAction("Index", "Home") : View(new RegisterViewModel());
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToAction("Index", "Home");
+        }
+
+        return View(new RegisterViewModel());
     }
 
     [HttpPost]
@@ -24,15 +32,39 @@ public class AccountController(ElectionService electionService) : Controller
             return View(model);
         }
 
-        var result = await electionService.RegisterVoterAsync(model, cancellationToken);
-        if (!result.Succeeded)
+        var emailCheck = await emailValidationService.ValidateAsync(model.Email, cancellationToken);
+        if (!emailCheck.IsAllowed)
         {
-            ModelState.AddModelError(string.Empty, result.Message);
+            ModelState.AddModelError(nameof(model.Email), emailCheck.Reason);
             return View(model);
         }
 
-        await SignInAsync(result.UserId!, result.Email!, result.FullName!);
-        TempData["StatusMessage"] = result.Message;
+        var user = new ApplicationUser
+        {
+            UserName = emailCheck.NormalizedEmail,
+            Email = emailCheck.NormalizedEmail,
+            FullName = model.FullName,
+            ProvinceCode = model.Province,
+            MailcheckValidated = emailCheck.IsAllowed,
+            MailcheckStatus = emailCheck.RiskLevel
+        };
+
+        var createResult = await userManager.CreateAsync(user, model.Password);
+        if (!createResult.Succeeded)
+        {
+            foreach (var error in createResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            logger.LogWarning("User registration failed for {Email}.", model.Email);
+            return View(model);
+        }
+
+        await signInManager.SignInAsync(user, isPersistent: true);
+        logger.LogInformation("User {UserId} registered successfully.", user.Id);
+
+        TempData["StatusMessage"] = "Registration scaffold completed. Firestore profile persistence will plug in here next.";
         return RedirectToAction("Ballot", "Election");
     }
 
@@ -56,14 +88,15 @@ public class AccountController(ElectionService electionService) : Controller
             return View(model);
         }
 
-        var result = await electionService.AuthenticateAsync(model, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent: true, lockoutOnFailure: false);
         if (!result.Succeeded)
         {
-            ModelState.AddModelError(string.Empty, result.Message);
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            logger.LogWarning("Invalid login attempt for {Email}.", model.Email);
             return View(model);
         }
-
-        await SignInAsync(result.UserId!, result.Email!, result.FullName!);
 
         if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
         {
@@ -77,27 +110,8 @@ public class AccountController(ElectionService electionService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        await signInManager.SignOutAsync();
         TempData["StatusMessage"] = "You have been signed out.";
         return RedirectToAction("Index", "Home");
-    }
-
-    private async Task SignInAsync(string userId, string email, string fullName)
-    {
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, userId),
-            new(ClaimTypes.Email, email),
-            new(ClaimTypes.Name, fullName),
-            new(ClaimTypes.Role, "Voter")
-        };
-
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        var principal = new ClaimsPrincipal(identity);
-
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            principal,
-            new AuthenticationProperties { IsPersistent = true });
     }
 }

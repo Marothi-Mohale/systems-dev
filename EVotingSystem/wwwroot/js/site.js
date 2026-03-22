@@ -1,8 +1,1 @@
-document.querySelectorAll(".ballot-card").forEach((card) => {
-  card.addEventListener("click", () => {
-    const input = card.querySelector("input[type='radio']");
-    if (input) {
-      input.checked = true;
-    }
-  });
-});
+// Placeholder for future client-side enhancements such as dashboard polling or ballot UX helpers.

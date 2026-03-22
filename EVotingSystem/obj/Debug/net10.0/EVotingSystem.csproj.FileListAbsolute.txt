@@ -20,9 +20,7 @@
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/rjsmrazor.dswa.cache.json
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/scopedcss/bundle/EVotingSystem.styles.css
-/workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/b6d59ls7ad-{0}-x2wz11c7vw-x2wz11c7vw.gz
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/cj0rhwl0ju-{0}-61n19gt1b8-61n19gt1b8.gz
-/workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/mtzki86i62-{0}-c37ifu3vw4-c37ifu3vw4.gz
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/e8e29t7m4x-{0}-bqjiyaj88i-bqjiyaj88i.gz
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/6qmtixegoh-{0}-c2jlpeoesf-c2jlpeoesf.gz
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/f5k935ekzs-{0}-erw9l3u2r3-erw9l3u2r3.gz
@@ -92,3 +90,5 @@
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/EVotingSystem.pdb
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/EVotingSystem.genruntimeconfig.cache
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/ref/EVotingSystem.dll
+/workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/mtzki86i62-{0}-88q04ockai-88q04ockai.gz
+/workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/b6d59ls7ad-{0}-g3d6wb62ti-g3d6wb62ti.gz

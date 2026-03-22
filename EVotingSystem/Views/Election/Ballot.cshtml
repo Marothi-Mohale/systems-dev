@@ -1,52 +1,32 @@
 @model EVotingSystem.Models.ViewModels.BallotViewModel
 @{
-    ViewData["Title"] = "My Ballot";
+    ViewData["Title"] = "Ballot";
 }
 
-<section class="section-heading ballot-heading">
-    <div>
-        <span class="eyebrow">Authenticated Voter</span>
-        <h1>@Model.VoterName's ballot</h1>
+<section class="content-card">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+        <div>
+            <span class="eyebrow">Authenticated Voter Area</span>
+            <h1 class="display-6 fw-bold mb-2">@Model.VoterName's ballot</h1>
+            <p class="text-secondary mb-0">This page is protected by ASP.NET Core Identity. The next build step is connecting the submit action to a Firestore transaction that records the vote, increments candidate totals, and marks the voter as having voted.</p>
+        </div>
+        <div class="mini-stat">
+            <span class="stat-label">Election</span>
+            <strong class="stat-value small-value">@Model.Election.Title</strong>
+        </div>
     </div>
-    <p>@Model.Election.Title</p>
-</section>
 
-@if (TempData["StatusMessage"] is string statusMessage)
-{
-    <div class="alert alert-info status-banner">@statusMessage</div>
-}
-
-@if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))
-{
-    <div class="alert alert-warning status-banner">@Model.ValidationMessage</div>
-}
-
-@if (Model.AlreadyVoted)
-{
-    <section class="confirmation-panel">
-        <h2>Vote already recorded</h2>
-        <p>You have already cast your ballot. This platform enforces one vote per registered voter.</p>
-        <a class="btn btn-secondary-outline" asp-controller="Home" asp-action="Index">View live results</a>
-    </section>
-}
-else
-{
-    <form asp-action="Vote" method="post" class="ballot-grid">
+    <div class="row g-4">
         @foreach (var candidate in Model.Candidates)
         {
-            <label class="ballot-card">
-                <input type="radio" name="CandidateId" value="@candidate.Id" />
-                <span class="ballot-card-body">
-                    <span class="eyebrow">@candidate.Party</span>
-                    <strong>@candidate.Name</strong>
-                    <span>@candidate.Slogan</span>
-                    <small>@candidate.Biography</small>
-                </span>
-            </label>
+            <div class="col-12 col-lg-4">
+                <article class="candidate-card h-100">
+                    <span class="candidate-party">@candidate.Party</span>
+                    <h2 class="h4">@candidate.Name</h2>
+                    <p class="fw-semibold">@candidate.Slogan</p>
+                    <p class="text-secondary mb-0">@candidate.Biography</p>
+                </article>
+            </div>
         }
-
-        <div class="ballot-actions">
-            <button type="submit" class="btn btn-accent">Cast my vote</button>
-        </div>
-    </form>
-}
+    </div>
+</section>
