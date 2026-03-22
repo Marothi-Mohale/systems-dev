@@ -380,6 +380,22 @@ Quick-start options:
 - percentage and turnout calculations
 - graceful empty states and retry-safe error handling
 
+## Deployment
+
+Deployment guidance is documented in [Docs/deployment-guide.md](/workspaces/systems-dev/EVotingSystem/Docs/deployment-guide.md).
+
+Files prepared for deployment configuration:
+
+- [appsettings.Production.json](/workspaces/systems-dev/EVotingSystem/appsettings.Production.json)
+- [appsettings.Production.template.json](/workspaces/systems-dev/EVotingSystem/appsettings.Production.template.json)
+
+Production notes:
+
+- keep secrets out of committed config
+- prefer environment variables or a secret manager for Firebase and Mailcheck
+- set `ASPNETCORE_ENVIRONMENT=Production`
+- verify `AllowedHosts` and reverse-proxy forwarding in the target hosting environment
+
 - `elections`
 - `candidates`
 - `votes`

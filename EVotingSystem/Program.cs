@@ -5,8 +5,10 @@ using EVotingSystem.Options;
 using EVotingSystem.Services;
 using EVotingSystem.Services.Interfaces;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Net.Http.Headers;
 using FirestoreElectionRepository = EVotingSystem.Infrastructure.Firestore.FirestoreElectionRepository;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,12 +23,18 @@ builder.Services.AddControllersWithViews(options =>
 });
 builder.Services.AddRazorPages();
 builder.Services.AddProblemDetails();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.Name = "__Host-ElectionPlatform.Antiforgery";
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
     options.HeaderName = "X-CSRF-TOKEN";
 });
 builder.Services.AddRateLimiter(options =>
@@ -87,7 +95,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "__Host-ElectionPlatform.Auth";
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.IsEssential = true;
     options.LoginPath = "/Account/Login";
@@ -154,7 +162,17 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseForwardedHeaders();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        if (!app.Environment.IsDevelopment())
+        {
+            context.Context.Response.Headers[HeaderNames.CacheControl] = "public,max-age=604800";
+        }
+    }
+});
 app.UseRouting();
 app.UseRateLimiter();
 
