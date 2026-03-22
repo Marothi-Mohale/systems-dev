@@ -3,38 +3,98 @@
     ViewData["Title"] = "Ballot";
 }
 
-<section class="content-card">
-    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
-        <div>
-            <span class="eyebrow">Authenticated Voter Area</span>
-            <h1 class="display-6 fw-bold mb-2">@Model.VoterName's ballot</h1>
-            <p class="text-secondary mb-0">This page is protected by ASP.NET Core Identity. The voting rules are explicit in the model: one authenticated, eligible voter gets one vote during the election window.</p>
+<section class="hero-card ballot-hero mb-4">
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-8">
+            <span class="eyebrow">Authenticated Ballot</span>
+            <h1 class="display-5 fw-bold mb-3">Cast your vote, @Model.VoterName</h1>
+            <p class="lead text-secondary mb-0">Choose one candidate for this demo election. The ballot is designed for a clean academic presentation, mobile responsiveness, and a clear one-voter-one-vote rule.</p>
         </div>
-        <div class="mini-stat">
-            <span class="stat-label">Election</span>
-            <strong class="stat-value small-value">@Model.Election.Title</strong>
-        </div>
-    </div>
-
-    <div class="feature-panel mb-4">
-        <div class="d-flex flex-wrap gap-4">
-            <span><strong>Voting window:</strong> @Model.Election.StartsAtUtc.ToLocalTime():g to @Model.Election.EndsAtUtc.ToLocalTime():g</span>
-            <span><strong>Max votes per voter:</strong> @Model.VotingRules.MaxVotesPerVoterPerElection</span>
-            <span><strong>Status:</strong> @(Model.CanSubmitVote ? "Open for voting" : "Unavailable")</span>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        @foreach (var candidate in Model.Candidates)
-        {
-            <div class="col-12 col-lg-4">
-                <article class="candidate-card h-100">
-                    <span class="candidate-party">@candidate.Party</span>
-                    <h2 class="h4">@candidate.Name</h2>
-                    <p class="fw-semibold">@candidate.Slogan</p>
-                    <p class="text-secondary mb-0">@candidate.Biography</p>
-                </article>
+        <div class="col-lg-4">
+            <div class="stats-panel ballot-stats">
+                <div>
+                    <span class="stat-label">Election</span>
+                    <strong class="stat-value small-value">@Model.Election.Title</strong>
+                </div>
+                <div>
+                    <span class="stat-label">Status</span>
+                    <strong class="stat-value small-value">@(Model.AlreadyVoted ? "Vote Submitted" : Model.CanSubmitVote ? "Open" : "Unavailable")</strong>
+                </div>
             </div>
-        }
+        </div>
     </div>
+</section>
+
+<section class="content-card">
+    <div class="feature-panel mb-4 ballot-guidance">
+        <div class="d-flex flex-wrap gap-4">
+            <span><strong>Voting window:</strong> @Model.Election.StartsAtUtc.ToLocalTime().ToString("g") to @Model.Election.EndsAtUtc.ToLocalTime().ToString("g")</span>
+            <span><strong>Max votes per voter:</strong> @Model.VotingRules.MaxVotesPerVoterPerElection</span>
+            <span><strong>Ballot type:</strong> Single-candidate selection</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))
+    {
+        <div class="alert @(Model.AlreadyVoted ? "alert-warning" : "alert-info") shadow-sm mb-4" role="alert">
+            @Model.ValidationMessage
+        </div>
+    }
+
+    @if (!Model.HasCandidates)
+    {
+        <div class="ballot-empty-state text-center py-5">
+            <h2 class="h3 mb-3">No candidates are available yet</h2>
+            <p class="text-secondary mb-0">The ballot cannot be submitted until candidate data is loaded from Firestore.</p>
+        </div>
+    }
+    else if (Model.AlreadyVoted)
+    {
+        <div class="ballot-empty-state text-center py-5">
+            <h2 class="h3 mb-3">Your ballot has already been submitted</h2>
+            <p class="text-secondary mb-0">This election only permits one vote per authenticated voter.</p>
+        </div>
+    }
+    else
+    {
+        <form asp-action="Ballot" method="post" novalidate>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-4 ballot-grid">
+                @foreach (var candidate in Model.Candidates)
+                {
+                    var isSelected = string.Equals(Model.SelectedCandidateId, candidate.Id, StringComparison.Ordinal);
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <label class="ballot-option-card @(isSelected ? "selected" : string.Empty)">
+                            <input asp-for="SelectedCandidateId" type="radio" value="@candidate.Id" class="ballot-option-input" />
+                            <span class="ballot-option-body">
+                                @if (!string.IsNullOrWhiteSpace(candidate.PhotoUrl))
+                                {
+                                    <img src="@candidate.PhotoUrl" alt="@candidate.Name portrait" class="candidate-photo mb-3" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="candidate-photo candidate-photo-placeholder mb-3" aria-hidden="true">@candidate.Name[..1]</span>
+                                }
+                                <span class="candidate-party">@(!string.IsNullOrWhiteSpace(candidate.Party) ? candidate.Party : "Independent")</span>
+                                <span class="ballot-candidate-name">@candidate.Name</span>
+                                @if (!string.IsNullOrWhiteSpace(candidate.Slogan))
+                                {
+                                    <span class="ballot-candidate-slogan">@candidate.Slogan</span>
+                                }
+                                <span class="ballot-candidate-bio">@candidate.Biography</span>
+                                <span class="ballot-select-indicator">Select Candidate</span>
+                            </span>
+                        </label>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mt-4 ballot-submit-bar">
+                <p class="text-secondary mb-0">Review your selection carefully before submitting. Once recorded, the vote cannot be changed in this prototype.</p>
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4" @(Model.CanSubmitVote ? null : "disabled")>Submit Vote</button>
+            </div>
+        </form>
+    }
 </section>

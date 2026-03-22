@@ -7,4 +7,5 @@ public interface ICandidateRepository
     Task<IReadOnlyList<Candidate>> GetActiveCandidatesAsync(CancellationToken cancellationToken);
     Task<Candidate?> GetByIdAsync(string candidateId, CancellationToken cancellationToken);
     Task<bool> CreateIfMissingAsync(Candidate candidate, CancellationToken cancellationToken);
+    Task UpdateAsync(Candidate candidate, CancellationToken cancellationToken);
 }

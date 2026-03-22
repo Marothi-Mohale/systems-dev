@@ -14,14 +14,15 @@ public class VoteViewModel
 
     public bool AlreadyVoted { get; set; }
 
-    [Required]
     [StringLength(120)]
     public string VoterName { get; set; } = string.Empty;
 
     [StringLength(256)]
     public string? ValidationMessage { get; set; }
 
+    public bool HasCandidates => Candidates.Count > 0;
+
     public VotingRules VotingRules { get; set; } = new();
 
-    public bool CanSubmitVote => !AlreadyVoted && Election.IsVotingOpen(DateTime.UtcNow);
+    public bool CanSubmitVote => HasCandidates && !AlreadyVoted && Election.IsVotingOpen(DateTime.UtcNow);
 }

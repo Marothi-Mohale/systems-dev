@@ -28,6 +28,10 @@ public class Candidate
     [StringLength(2000)]
     public string Biography { get; set; } = string.Empty;
 
+    [Url]
+    [StringLength(2048)]
+    public string? PhotoUrl { get; set; }
+
     [Range(0, int.MaxValue)]
     public int VoteCount { get; set; }
 

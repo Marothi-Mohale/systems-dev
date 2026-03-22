@@ -88,6 +88,44 @@ public class FirestoreCandidateRepository(
         }
     }
 
+    public async Task UpdateAsync(Candidate candidate, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!firebase.IsConfigured)
+        {
+            logger.LogDebug("Skipping candidate update because Firebase is not configured.");
+            return;
+        }
+
+        try
+        {
+            var path = $"{Collections.Candidates}/{candidate.Id}";
+            var payload = BuildDocument(candidate, path);
+            await Client.PatchDocumentAsync(
+                path,
+                payload,
+                cancellationToken,
+                "electionId",
+                "name",
+                "party",
+                "slogan",
+                "biography",
+                "photoUrl",
+                "voteCount",
+                "isActive",
+                "displayOrder",
+                "provinceCode",
+                "provinceName",
+                "updatedAtUtc");
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogError(exception, "Failed to update candidate {CandidateId}.", candidate.Id);
+            throw new FirestoreException($"Failed to update candidate '{candidate.Id}'.", exception);
+        }
+    }
+
     private static Candidate ParseCandidate(JsonElement document)
     {
         var fields = GetFields(document);
@@ -99,6 +137,7 @@ public class FirestoreCandidateRepository(
             Party = GetString(fields, "party"),
             Slogan = GetString(fields, "slogan"),
             Biography = GetString(fields, "biography"),
+            PhotoUrl = GetNullableString(fields, "photoUrl"),
             VoteCount = GetInt(fields, "voteCount"),
             IsActive = !fields.TryGetProperty("isActive", out var activeField) || activeField.GetProperty("booleanValue").GetBoolean(),
             DisplayOrder = GetInt(fields, "displayOrder"),
@@ -109,7 +148,7 @@ public class FirestoreCandidateRepository(
         };
     }
 
-    private static object BuildDocument(Candidate candidate) =>
+    private static object BuildDocument(Candidate candidate, string? path = null) =>
         BuildDocument(new Dictionary<string, object?>
         {
             ["electionId"] = candidate.ElectionId,
@@ -117,6 +156,7 @@ public class FirestoreCandidateRepository(
             ["party"] = candidate.Party,
             ["slogan"] = candidate.Slogan,
             ["biography"] = candidate.Biography,
+            ["photoUrl"] = candidate.PhotoUrl,
             ["voteCount"] = candidate.VoteCount,
             ["isActive"] = candidate.IsActive,
             ["displayOrder"] = candidate.DisplayOrder,
@@ -124,5 +164,5 @@ public class FirestoreCandidateRepository(
             ["provinceName"] = candidate.ProvinceName,
             ["createdAtUtc"] = candidate.CreatedAtUtc,
             ["updatedAtUtc"] = candidate.UpdatedAtUtc
-        });
+        }, path);
 }

@@ -28,6 +28,10 @@ public class CandidateDocument : FirestoreDocumentBase
     [StringLength(2000)]
     public string Biography { get; set; } = string.Empty;
 
+    [JsonPropertyName("photoUrl")]
+    [StringLength(2048)]
+    public string? PhotoUrl { get; set; }
+
     [JsonPropertyName("voteCount")]
     [Range(0, int.MaxValue)]
     public int VoteCount { get; set; }

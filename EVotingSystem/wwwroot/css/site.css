@@ -120,6 +120,135 @@ body {
   min-width: 220px;
 }
 
+.ballot-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.ballot-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -4rem -4rem auto;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(197, 142, 43, 0.18) 0%, rgba(197, 142, 43, 0) 70%);
+  pointer-events: none;
+}
+
+.ballot-stats {
+  grid-template-columns: 1fr;
+}
+
+.ballot-guidance {
+  background: linear-gradient(135deg, rgba(18, 111, 92, 0.08), rgba(197, 142, 43, 0.08));
+}
+
+.ballot-option-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ballot-option-card {
+  display: block;
+  height: 100%;
+  cursor: pointer;
+}
+
+.ballot-option-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.5rem;
+  border: 1px solid rgba(22, 50, 44, 0.1);
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 20px 45px rgba(21, 42, 36, 0.08);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.ballot-option-card:hover .ballot-option-body,
+.ballot-option-card.selected .ballot-option-body,
+.ballot-option-input:checked + .ballot-option-body {
+  transform: translateY(-4px);
+  border-color: rgba(18, 111, 92, 0.45);
+  box-shadow: 0 24px 55px rgba(18, 111, 92, 0.16);
+}
+
+.candidate-photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 1rem;
+  background: #dce9e4;
+}
+
+.candidate-photo-placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #126f5c, #c58e2b);
+  color: white;
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+.ballot-candidate-name {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #16322c;
+}
+
+.ballot-candidate-slogan {
+  display: block;
+  margin-top: 0.5rem;
+  font-weight: 700;
+  color: #28453e;
+}
+
+.ballot-candidate-bio {
+  display: block;
+  margin-top: 0.75rem;
+  color: #5d6d68;
+  flex-grow: 1;
+}
+
+.ballot-select-indicator {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: 1rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(18, 111, 92, 0.1);
+  color: #126f5c;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ballot-option-card.selected .ballot-select-indicator,
+.ballot-option-input:checked + .ballot-option-body .ballot-select-indicator {
+  background: #126f5c;
+  color: white;
+}
+
+.ballot-submit-bar {
+  border-top: 1px solid rgba(22, 50, 44, 0.08);
+  padding-top: 1.5rem;
+}
+
+.ballot-empty-state {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(238, 244, 242, 0.9));
+  border: 1px dashed rgba(18, 111, 92, 0.25);
+  border-radius: 1.25rem;
+}
+
 @media (max-width: 767.98px) {
   .hero-card,
   .content-card {
@@ -128,5 +257,9 @@ body {
 
   .stats-panel {
     grid-template-columns: 1fr;
+  }
+
+  .ballot-option-body {
+    padding: 1.1rem;
   }
 }

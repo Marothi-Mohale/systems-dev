@@ -20,7 +20,7 @@ public class FirestoreElectionRepository(
     public Task EnsureSeedDataAsync(CancellationToken cancellationToken) =>
         seedService.EnsureSeedDataAsync(cancellationToken);
 
-    public async Task<VoteViewModel> GetBallotAsync(string voterName, CancellationToken cancellationToken)
+    public async Task<VoteViewModel> GetBallotAsync(string? voterId, string voterName, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -37,13 +37,86 @@ public class FirestoreElectionRepository(
             logger.LogInformation("Using seeded candidate data because Firebase is not configured.");
         }
 
+        var alreadyVoted = !string.IsNullOrWhiteSpace(voterId) && firebase.IsConfigured
+            ? await voteRepository.ExistsForVoterAsync(seeds.Election.Id, voterId, cancellationToken)
+            : false;
+
         return new VoteViewModel
         {
             Election = seeds.Election,
             Candidates = candidates,
+            AlreadyVoted = alreadyVoted,
             VoterName = string.IsNullOrWhiteSpace(voterName) ? "Registered voter" : voterName,
-            VotingRules = seeds.Election.VotingRules
+            VotingRules = seeds.Election.VotingRules,
+            ValidationMessage = candidates.Count == 0
+                ? "No candidates are currently available. Please check back later."
+                : null
         };
+    }
+
+    public async Task<OperationResult> SubmitVoteAsync(string voterId, string candidateId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!seeds.Election.IsVotingOpen(DateTime.UtcNow))
+        {
+            return OperationResult.Failure("Voting is currently closed for this election.");
+        }
+
+        var candidate = firebase.IsConfigured
+            ? await candidateRepository.GetByIdAsync(candidateId, cancellationToken)
+            : seeds.Candidates.FirstOrDefault(entry => string.Equals(entry.Id, candidateId, StringComparison.OrdinalIgnoreCase) && entry.IsActive);
+
+        if (candidate is null || !candidate.IsActive)
+        {
+            return OperationResult.Failure("The selected candidate could not be found.");
+        }
+
+        if (firebase.IsConfigured && await voteRepository.ExistsForVoterAsync(seeds.Election.Id, voterId, cancellationToken))
+        {
+            return OperationResult.Failure("You have already voted in this election.");
+        }
+
+        if (!firebase.IsConfigured)
+        {
+            candidate.VoteCount += 1;
+            candidate.UpdatedAtUtc = DateTime.UtcNow;
+            return OperationResult.Success("Your vote has been recorded successfully.");
+        }
+
+        var vote = new VoteRecord
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            ElectionId = seeds.Election.Id,
+            VoterId = voterId,
+            CandidateId = candidate.Id,
+            VotingChannel = "web",
+            Status = "accepted",
+            CastAtUtc = DateTime.UtcNow,
+            RecordedAtUtc = DateTime.UtcNow
+        };
+
+        candidate.VoteCount += 1;
+        candidate.UpdatedAtUtc = DateTime.UtcNow;
+
+        await voteRepository.CreateAsync(vote, cancellationToken);
+        await candidateRepository.UpdateAsync(candidate, cancellationToken);
+
+        var totalVotes = await voteRepository.CountAcceptedVotesAsync(seeds.Election.Id, cancellationToken);
+        await statisticsRepository.UpsertAsync(new PollStatistics
+        {
+            ElectionId = seeds.Election.Id,
+            TotalVotesCast = totalVotes,
+            AcceptedVotes = totalVotes,
+            RejectedVotes = 0,
+            EligibleVoterCount = seeds.Election.TotalPopulation,
+            DistinctVoterCount = totalVotes,
+            ElectionOpen = seeds.Election.IsVotingOpen(DateTime.UtcNow),
+            GeneratedAtUtc = DateTime.UtcNow,
+            VotingRules = seeds.Election.VotingRules
+        }, cancellationToken);
+
+        return OperationResult.Success("Your vote has been recorded successfully.");
     }
 
     public async Task<PublicResultsViewModel> GetPublicDashboardAsync(CancellationToken cancellationToken)
