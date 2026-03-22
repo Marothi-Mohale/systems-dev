@@ -8,6 +8,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Net.Http.Headers;
 using FirestoreElectionRepository = EVotingSystem.Infrastructure.Firestore.FirestoreElectionRepository;
 
@@ -15,7 +16,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
-builder.Logging.AddDebug();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Logging.AddDebug();
+}
 
 builder.Services.AddControllersWithViews(options =>
 {
@@ -23,6 +27,11 @@ builder.Services.AddControllersWithViews(options =>
 });
 builder.Services.AddRazorPages();
 builder.Services.AddProblemDetails();
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["image/svg+xml"]);
+});
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -146,9 +155,37 @@ var app = builder.Build();
 
 var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
 var firebaseSettings = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<FirebaseOptions>>().Value;
+var firestoreSettings = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<FirestoreOptions>>().Value;
+var mailcheckSettings = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<MailCheckOptions>>().Value;
+var allowedHosts = builder.Configuration["AllowedHosts"];
 if (firebaseSettings.HasPlaceholderSecrets)
 {
     startupLogger.LogWarning("Firebase configuration contains placeholder values. Use secure secret sources such as environment variables or user secrets.");
+}
+
+if (app.Environment.IsProduction())
+{
+    if (string.IsNullOrWhiteSpace(allowedHosts) ||
+        string.Equals(allowedHosts, "*", StringComparison.Ordinal) ||
+        allowedHosts.Contains("your-production-hostname", StringComparison.OrdinalIgnoreCase))
+    {
+        startupLogger.LogWarning("AllowedHosts is not restricted for production. Set it to your real hostname list before deployment.");
+    }
+
+    if (firestoreSettings.SeedOnStartup)
+    {
+        startupLogger.LogWarning("Firestore startup seeding is enabled in production. Disable Firestore:SeedOnStartup unless you are deploying an intentional demo environment.");
+    }
+
+    if (!firebaseSettings.IsConfigured)
+    {
+        startupLogger.LogWarning("Firebase is not fully configured for production. Firestore-backed data access will fail until secure credentials are supplied.");
+    }
+
+    if (!mailcheckSettings.IsConfigured)
+    {
+        startupLogger.LogWarning("Mailcheck is not configured for production. New registrations will be blocked until MailCheck__ApiKey is supplied.");
+    }
 }
 
 if (app.Environment.IsDevelopment())
@@ -161,15 +198,28 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseForwardedHeaders();
+app.UseHttpsRedirection();
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.TryAdd(HeaderNames.XContentTypeOptions, "nosniff");
+    context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
+    context.Response.Headers.TryAdd("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.TryAdd("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+
+    await next();
+});
+app.UseResponseCompression();
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = context =>
     {
         if (!app.Environment.IsDevelopment())
         {
-            context.Context.Response.Headers[HeaderNames.CacheControl] = "public,max-age=604800";
+            context.Context.Response.Headers[HeaderNames.CacheControl] =
+                context.Context.Request.Query.ContainsKey("v")
+                    ? "public,max-age=31536000,immutable"
+                    : "public,max-age=604800";
         }
     }
 });

@@ -1,36 +1,37 @@
 # Election Platform Deployment Guide
 
-## Production readiness checklist
+## 1. Production readiness checklist
 
-- Set `ASPNETCORE_ENVIRONMENT=Production`
-- Use HTTPS in front of the app
-- Provide Firebase and Mailcheck secrets through environment variables or a secret manager, not committed config
-- Set `AllowedHosts` to your real hostname(s)
-- Disable startup demo seeding in production unless you are deliberately provisioning a demo environment
-- Verify Firestore collections exist and the service account has the minimum required permissions
-- Confirm registration, login, ballot submission, and public results work against production configuration
-- Validate proxy forwarding if hosted behind IIS, Nginx, Azure App Service, or another reverse proxy
-- Review logs to ensure no secrets or raw backend responses are being written
-- Publish static assets and verify CSS, JS, and image files are served correctly
+- Set `ASPNETCORE_ENVIRONMENT=Production`.
+- Terminate TLS at the host or reverse proxy and keep HTTPS enabled end to end.
+- Set `AllowedHosts` to the real public hostname list for the deployment.
+- Keep `Firestore:SeedOnStartup=false` in production unless the target is an intentional demo instance.
+- Supply Firebase and Mailcheck secrets through environment variables or a secret manager.
+- Confirm outbound access to `oauth2.googleapis.com`, `firestore.googleapis.com`, and `api.mailcheck.ai`.
+- Publish the full ASP.NET Core app, including `wwwroot/`.
+- Smoke test registration, login, ballot load, vote submission, and public results.
+- Review startup logs for configuration warnings before opening the app to users.
+- Verify the Firestore service account has only the permissions required for this app.
 
-## Development vs Production configuration separation
+## 2. Development vs Production configuration separation
 
 ### Development
 
-- `appsettings.Development.json` can keep verbose logging
-- local demo mode may run without Firebase credentials
-- startup seeding is useful locally
+- Keep shared defaults in [appsettings.json](/workspaces/systems-dev/EVotingSystem/appsettings.json).
+- Put developer-only overrides in [appsettings.Development.json](/workspaces/systems-dev/EVotingSystem/appsettings.Development.json).
+- Use user secrets or shell environment variables for local secrets.
+- Verbose logging and startup seeding are acceptable locally.
 
 ### Production
 
-- use [appsettings.Production.json](/workspaces/systems-dev/EVotingSystem/appsettings.Production.json) only for non-secret overrides
-- use [appsettings.Production.template.json](/workspaces/systems-dev/EVotingSystem/appsettings.Production.template.json) as the structure reference
-- keep Firebase and Mailcheck secrets out of source control
-- prefer `Firestore:SeedOnStartup=false`
+- Keep only non-secret production overrides in [appsettings.Production.json](/workspaces/systems-dev/EVotingSystem/appsettings.Production.json).
+- Use [appsettings.Production.template.json](/workspaces/systems-dev/EVotingSystem/appsettings.Production.template.json) as the final structure reference.
+- Prefer environment variables or a secret store for all secret values.
+- Keep seeding disabled and log levels conservative by default.
 
-## Secure secret handling guidance
+## 3. Secure secret handling guidance
 
-Do not store these in committed files:
+Never commit these values:
 
 - `Firebase:ProjectId`
 - `Firebase:ServiceAccountEmail`
@@ -39,14 +40,22 @@ Do not store these in committed files:
 
 Recommended secret sources:
 
-- cloud secret manager
-- hosting platform application settings
+- Azure App Service application settings
+- AWS / GCP / platform secret manager
+- container orchestrator secrets
 - environment variables
-- user secrets for local development only
+- .NET user secrets for local development only
 
-## Firebase credential deployment guidance
+Operational notes:
 
-This app uses service-account style values rather than a downloaded JSON file at runtime. You should deploy:
+- Rotate secrets after any accidental exposure.
+- Limit who can read production secrets.
+- Do not echo secrets in startup scripts or CI logs.
+- Preserve the Firebase private key exactly; if the host only supports single-line values, store newlines as `\n`.
+
+## 4. Firebase credential deployment guidance
+
+This app authenticates to Firestore with service-account values, not a downloaded JSON file consumed directly at runtime. Configure:
 
 - `Firebase__ProjectId`
 - `Firebase__DatabaseId`
@@ -54,122 +63,177 @@ This app uses service-account style values rather than a downloaded JSON file at
 - `Firebase__ServiceAccountPrivateKey`
 - `Firebase__TokenUri`
 
-Important:
+Deployment guidance:
 
-- keep the private key PEM text intact
-- if your platform requires single-line environment variables, preserve newlines as `\n`
-- use a service account with only the Firestore permissions needed for candidate reads, vote writes, and stats updates
+- Use a dedicated service account for the app.
+- Grant only the Firestore permissions needed for reads, writes, and transaction commits used by the platform.
+- Confirm the target Firestore database and collection names match the configured values.
+- Test the credential formatting before cutover by validating a read and a write in a staging environment.
 
-## ASP.NET hosting guidance
+## 5. ASP.NET hosting guidance
 
-This app is suitable for:
+Supported hosting patterns:
 
-- IIS / ASP.NET Core Module
+- IIS with ASP.NET Core Module
 - Azure App Service
-- container hosting
-- Linux + Nginx reverse proxy + Kestrel
+- Linux VM or container with Nginx or Apache in front of Kestrel
+- generic cloud platform running ASP.NET Core
 
-Production-safe hosting points already applied:
+Hosting expectations already baked into the app:
 
+- forwarded headers support for reverse proxies
+- HTTPS redirection
 - HSTS outside development
-- secure auth cookies
-- forwarded-header handling for reverse-proxy deployments
-- global anti-forgery validation for unsafe HTTP methods
-- rate limiting on authentication and vote submission
+- antiforgery validation on unsafe form posts
+- secure auth and antiforgery cookies
+- rate limiting for login and vote submission
+- conservative security headers on responses
+- static asset cache control
 
-## Static asset handling
+Publish command:
 
-- static files under `wwwroot/` are served directly
-- production responses now set cache headers for static assets
-- continue using `asp-append-version="true"` on CSS/JS so deployments invalidate old browser cache automatically
-- keep candidate images and branding assets in `wwwroot/images/`
+```bash
+dotnet publish /workspaces/systems-dev/EVotingSystem/EVotingSystem.csproj -c Release -o ./publish
+```
 
-## Logging considerations
+Important reverse-proxy note:
 
-- keep production log levels at `Warning` by default unless diagnosing an issue
-- centralize logs in your hosting platform or aggregator if possible
-- avoid logging raw secrets, tokens, private keys, or full unmasked user emails
-- review startup logs for placeholder Firebase warnings or repeated Mailcheck / Firestore failures
+- forwarded headers must reach the app so the request scheme is recognized correctly
+- if your host strips `X-Forwarded-Proto`, you can see HTTPS redirect loops
 
-## Common deployment pitfalls and fixes
+## 6. Static asset handling
 
-### Problem: Firebase is configured in code but still not used
+- All web assets must be deployed from `wwwroot/`.
+- CSS and JS already use `asp-append-version="true"` for cache busting.
+- Versioned static assets now receive long-lived immutable caching in production.
+- Non-versioned static assets receive a shorter cache lifetime.
+- Keep candidate images, logos, and branded artwork inside `wwwroot/images/`.
 
-Fix:
+Operational advice:
 
-- ensure all Firebase values are present
-- make sure they are not placeholder values
-- confirm the private key is formatted correctly
+- publish the updated `wwwroot` content with every release
+- if a CDN is used, invalidate cached non-versioned assets after deployment
+- avoid referencing local development-only asset paths
 
-### Problem: Registration fails in production
+## 7. Logging considerations
 
-Fix:
+- Production defaults should stay at `Warning` unless you are diagnosing an incident.
+- Console logging is appropriate for platform log capture; debug logging should stay development-only.
+- Never log secrets, bearer tokens, private keys, or full unmasked personal data.
+- Review warnings about `AllowedHosts`, missing Firebase config, missing Mailcheck config, or unexpected startup seeding.
+- Centralize logs through the host platform when possible.
 
-- check `MailCheck__ApiKey`
-- verify outbound network access to the Mailcheck API
-- confirm timeouts or rate limits are not being hit
+## 8. Common deployment pitfalls and fixes
 
-### Problem: HTTPS redirect loops or wrong scheme
+### HTTPS redirect loop behind a proxy
 
-Fix:
+Cause:
 
-- confirm reverse proxy forwarding is enabled
-- make sure `X-Forwarded-Proto` is passed to the app
-
-### Problem: Static assets look stale after deployment
-
-Fix:
-
-- ensure published `wwwroot` files were deployed
-- confirm the browser is receiving versioned asset URLs
-- clear CDN or reverse-proxy cache if used
-
-### Problem: Votes do not persist
+- `X-Forwarded-Proto` is missing or not trusted by the host chain
 
 Fix:
 
-- check Firestore permissions for the service account
-- verify the configured collection names
-- confirm the election stats document exists or reseed the environment intentionally
+- ensure the reverse proxy forwards the scheme header
+- keep forwarded-header processing enabled before HTTPS redirection
+
+### Registration fails immediately
+
+Cause:
+
+- `MailCheck__ApiKey` is missing or outbound access to `api.mailcheck.ai` is blocked
+
+Fix:
+
+- add the API key through secure configuration
+- verify egress/network rules and DNS resolution
+
+### Firestore reads or writes fail
+
+Cause:
+
+- malformed private key, wrong project ID, wrong database ID, or insufficient service-account permissions
+
+Fix:
+
+- verify each Firebase value
+- confirm newline preservation in the private key
+- test the service account against the target Firestore project
+
+### Demo data appears in production
+
+Cause:
+
+- `Firestore__SeedOnStartup=true` was left enabled
+
+Fix:
+
+- disable seeding in production
+- clean up any demo documents that were inserted unintentionally
+
+### Stale CSS, JS, or images after release
+
+Cause:
+
+- old cached assets at the browser, CDN, or reverse proxy
+
+Fix:
+
+- rely on versioned URLs for CSS and JS
+- invalidate non-versioned cached assets if a CDN or proxy is in front
 
 ## Deployment plan
 
-1. Prepare the target environment with HTTPS, hostname, and application settings.
-2. Set `ASPNETCORE_ENVIRONMENT=Production`.
-3. Configure Firebase and Mailcheck secrets through environment variables or a secret store.
-4. Deploy the published ASP.NET Core app and static assets.
-5. Validate startup logs for configuration and connectivity issues.
-6. Verify guest results, registration, login, ballot load, and vote submission.
-7. Seed or provision production candidate/stat data intentionally.
-8. Monitor logs during the first smoke test and adjust log routing if needed.
+1. Provision the target host, DNS, TLS certificate, and reverse-proxy configuration.
+2. Set production environment variables and secret-store entries.
+3. Confirm `AllowedHosts` and `Firestore__SeedOnStartup=false`.
+4. Publish the application and deploy the output, including `wwwroot/`.
+5. Start the app and review startup warnings and connectivity logs.
+6. Run smoke tests for registration, login, vote submission, and results.
+7. Verify Firestore documents are written correctly and only once per vote.
+8. Monitor logs and resource usage during the first live traffic window.
 
 ## Environment variable list
 
+Required:
+
 - `ASPNETCORE_ENVIRONMENT=Production`
-- `ASPNETCORE_URLS`
 - `AllowedHosts`
 - `Firebase__ProjectId`
 - `Firebase__DatabaseId`
 - `Firebase__ServiceAccountEmail`
 - `Firebase__ServiceAccountPrivateKey`
 - `Firebase__TokenUri`
-- `Firestore__SeedOnStartup`
+- `MailCheck__ApiKey`
+- `Firestore__SeedOnStartup=false`
+
+Common optional overrides:
+
+- `ASPNETCORE_URLS`
+- `Logging__LogLevel__Default`
+- `Logging__LogLevel__Microsoft.AspNetCore`
+- `Logging__LogLevel__Microsoft.AspNetCore.Identity`
 - `Firestore__Collections__Elections`
 - `Firestore__Collections__Candidates`
 - `Firestore__Collections__Votes`
 - `Firestore__Collections__ElectionStats`
 - `Firestore__Collections__VoterProfiles`
-- `MailCheck__ApiKey`
 - `MailCheck__BaseUrl`
 - `MailCheck__VerifyEndpointTemplate`
 - `MailCheck__TimeoutSeconds`
 - `MailCheck__MaxAttempts`
+- `MailCheck__RetryBaseDelayMilliseconds`
 - `Ui__ApplicationName`
 - `Ui__SupportEmail`
 
-## Markers and operators should notice
+## Final appsettings template
 
-- clean separation of development/demo config from production config
-- secret values are expected from secure deployment sources
-- the app degrades safely when Firestore or Mailcheck are unavailable
-- hosting guidance is aligned with standard ASP.NET Core deployment patterns
+Use [appsettings.Production.template.json](/workspaces/systems-dev/EVotingSystem/appsettings.Production.template.json) as the deployment template. Secret values should come from environment variables or a secret store even if this file is copied to create a host-local `appsettings.Production.json`.
+
+## Required production-safety changes now applied
+
+- forwarded headers are processed before HTTPS redirection to avoid proxy redirect loops
+- debug logging is now development-only
+- production startup warnings now call out unsafe `AllowedHosts`, enabled seeding, and missing Firebase or Mailcheck configuration
+- response compression is enabled
+- security headers are applied to responses
+- versioned static assets now receive immutable cache headers in production
