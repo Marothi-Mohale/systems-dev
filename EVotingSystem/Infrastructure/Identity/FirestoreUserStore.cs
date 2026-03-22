@@ -20,6 +20,18 @@ public class FirestoreUserStore :
         user.RegisteredAtUtc = user.RegisteredAtUtc == default ? DateTime.UtcNow : user.RegisteredAtUtc;
         user.UpdatedAtUtc = DateTime.UtcNow;
 
+        if (usersById.Values.Any(existing =>
+                string.Equals(existing.NormalizedEmail, user.NormalizedEmail, StringComparison.Ordinal) ||
+                string.Equals(existing.NormalizedUserName, user.NormalizedUserName, StringComparison.Ordinal)))
+        {
+            return Task.FromResult(IdentityResult.Failed(
+                new IdentityError
+                {
+                    Code = "DuplicateUser",
+                    Description = "An account with this email address already exists."
+                }));
+        }
+
         if (!usersById.TryAdd(user.Id, Clone(user)))
         {
             return Task.FromResult(IdentityResult.Failed(new IdentityError
@@ -97,7 +109,7 @@ public class FirestoreUserStore :
 
     public Task SetEmailAsync(ApplicationUser user, string? email, CancellationToken cancellationToken)
     {
-        user.Email = email;
+        user.Email = email?.Trim();
         return Task.CompletedTask;
     }
 
@@ -133,7 +145,7 @@ public class FirestoreUserStore :
 
     public Task SetUserNameAsync(ApplicationUser user, string? userName, CancellationToken cancellationToken)
     {
-        user.UserName = userName;
+        user.UserName = userName?.Trim();
         return Task.CompletedTask;
     }
 

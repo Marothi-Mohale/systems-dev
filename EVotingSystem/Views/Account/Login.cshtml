@@ -6,7 +6,7 @@
 <section class="content-card auth-card">
     <span class="eyebrow">Voter Login</span>
     <h1 class="display-6 fw-bold mb-3">Sign in to access your ballot</h1>
-    <p class="text-secondary mb-4">Identity cookies and secure password hashing are configured through ASP.NET Core Identity. This starter uses the Identity managers directly so the move from placeholder storage to Firestore-backed user persistence stays predictable.</p>
+    <p class="text-secondary mb-4">Sign in with the email address and password you used during registration. Identity handles password verification and the authenticated session server-side.</p>
 
     <form asp-action="Login" method="post" novalidate>
         @Html.AntiForgeryToken()
@@ -15,13 +15,13 @@
 
         <div class="mb-3">
             <label asp-for="Email" class="form-label"></label>
-            <input asp-for="Email" class="form-control form-control-lg" />
+            <input asp-for="Email" class="form-control form-control-lg" autocomplete="email" />
             <span asp-validation-for="Email" class="text-danger"></span>
         </div>
 
         <div class="mb-4">
             <label asp-for="Password" class="form-label"></label>
-            <input asp-for="Password" class="form-control form-control-lg" />
+            <input asp-for="Password" class="form-control form-control-lg" autocomplete="current-password" />
             <span asp-validation-for="Password" class="text-danger"></span>
         </div>
 

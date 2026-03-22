@@ -6,7 +6,7 @@
 <section class="content-card auth-card">
     <span class="eyebrow">Voter Registration</span>
     <h1 class="display-6 fw-bold mb-3">Create your voter account</h1>
-    <p class="text-secondary mb-4">This screen is already wired to ASP.NET Core Identity. Mailcheck.ai validation is called before account creation, and Firestore-backed user storage can replace the placeholder store without changing the controller contract.</p>
+    <p class="text-secondary mb-4">Your email is validated with Mailcheck.ai before an account is created. Once registration succeeds, ASP.NET Core Identity signs you in with a secure authenticated session.</p>
 
     <form asp-action="Register" method="post" novalidate>
         @Html.AntiForgeryToken()
@@ -15,12 +15,12 @@
         <div class="row g-3">
             <div class="col-12">
                 <label asp-for="FullName" class="form-label"></label>
-                <input asp-for="FullName" class="form-control form-control-lg" />
+                <input asp-for="FullName" class="form-control form-control-lg" autocomplete="name" />
                 <span asp-validation-for="FullName" class="text-danger"></span>
             </div>
             <div class="col-12">
                 <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control form-control-lg" />
+                <input asp-for="Email" class="form-control form-control-lg" autocomplete="email" />
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
             <div class="col-md-6">
@@ -41,12 +41,12 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="Password" class="form-label"></label>
-                <input asp-for="Password" class="form-control form-control-lg" />
+                <input asp-for="Password" class="form-control form-control-lg" autocomplete="new-password" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
             <div class="col-12">
                 <label asp-for="ConfirmPassword" class="form-label"></label>
-                <input asp-for="ConfirmPassword" class="form-control form-control-lg" />
+                <input asp-for="ConfirmPassword" class="form-control form-control-lg" autocomplete="new-password" />
                 <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
             </div>
         </div>
