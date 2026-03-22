@@ -15,6 +15,9 @@ public static class ResultsDashboardCalculatorTests
         yield return new TestCase(
             "Results dashboard handles zero vote state safely",
             HandlesZeroVoteStateAsync);
+        yield return new TestCase(
+            "Results dashboard preserves source population when no override is provided",
+            PreservesSourcePopulationAsync);
     }
 
     private static Task CalculatesPercentagesCorrectlyAsync()
@@ -66,6 +69,31 @@ public static class ResultsDashboardCalculatorTests
         AssertEx.Equal(0, result.Statistics.TotalVotesCast);
         AssertEx.Equal(0m, result.CandidateResults[0].VotePercentage);
         AssertEx.Equal(0m, result.PopulationTurnoutPercentage);
+        return Task.CompletedTask;
+    }
+
+    private static Task PreservesSourcePopulationAsync()
+    {
+        var calculator = new ResultsDashboardCalculator();
+        var source = new PublicResultsViewModel
+        {
+            CandidateResults =
+            [
+                new CandidateResultViewModel { CandidateId = "a", CandidateName = "Candidate A", Party = "Party A", VoteCount = 250 }
+            ],
+            Statistics = new PollStatistics
+            {
+                ElectionId = "2026-national-election",
+                EligibleVoterCount = 5000,
+                ElectionOpen = true
+            }
+        };
+
+        var result = calculator.BuildPresentationModel(source, populationSize: 0);
+
+        AssertEx.Equal(5000, result.PopulationSize);
+        AssertEx.Equal(5000, result.Statistics.EligibleVoterCount);
+        AssertEx.Equal(5m, result.PopulationTurnoutPercentage);
         return Task.CompletedTask;
     }
 }

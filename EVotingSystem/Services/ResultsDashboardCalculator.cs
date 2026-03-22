@@ -9,7 +9,12 @@ public class ResultsDashboardCalculator : IResultsDashboardCalculator
     {
         var candidateResults = NormalizeCandidateResults(source.CandidateResults);
         var totalVotes = candidateResults.Sum(result => result.VoteCount);
-        var normalizedPopulation = populationSize <= 0 ? 100 : populationSize;
+        var sourcePopulation = source.Statistics?.EligibleVoterCount ?? 0;
+        var normalizedPopulation = populationSize > 0
+            ? populationSize
+            : sourcePopulation > 0
+                ? sourcePopulation
+                : 100;
         var statistics = CloneStatistics(source, totalVotes, normalizedPopulation);
         var noCandidatesState = candidateResults.Count == 0;
         var zeroVoteState = totalVotes == 0;

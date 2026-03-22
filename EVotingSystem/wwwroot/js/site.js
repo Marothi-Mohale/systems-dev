@@ -10,9 +10,9 @@
     return;
   }
 
-  const totalVotesElement = document.querySelector("[data-results-total-votes]");
-  const turnoutElement = document.querySelector("[data-results-turnout]");
-  const generatedElement = document.querySelector("[data-results-generated]");
+  const totalVotesElements = () => Array.from(document.querySelectorAll("[data-results-total-votes]"));
+  const turnoutElements = () => Array.from(document.querySelectorAll("[data-results-turnout]"));
+  const generatedElements = () => Array.from(document.querySelectorAll("[data-results-generated]"));
   const statusElement = document.querySelector("[data-results-status]");
   const zeroVoteElement = document.querySelector("[data-results-zero-state]");
   const emptyStateElement = document.querySelector("[data-results-empty-state]");
@@ -38,16 +38,16 @@
         return;
       }
 
-      if (totalVotesElement) {
-        totalVotesElement.textContent = String(payload.totalVotesCast);
+      for (const element of totalVotesElements()) {
+        element.textContent = String(payload.totalVotesCast);
       }
 
-      if (turnoutElement) {
-        turnoutElement.textContent = `${payload.turnoutPercentage}%`;
+      for (const element of turnoutElements()) {
+        element.textContent = `${payload.turnoutPercentage}%`;
       }
 
-      if (generatedElement) {
-        generatedElement.textContent = new Date(payload.generatedAtUtc).toLocaleString();
+      for (const element of generatedElements()) {
+        element.textContent = new Date(payload.generatedAtUtc).toLocaleString();
       }
 
       if (statusElement) {

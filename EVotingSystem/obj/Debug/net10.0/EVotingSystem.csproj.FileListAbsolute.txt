@@ -91,9 +91,9 @@
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/EVotingSystem.genruntimeconfig.cache
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/ref/EVotingSystem.dll
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/b6d59ls7ad-{0}-zm6vidlswz-zm6vidlswz.gz
-/workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/mtzki86i62-{0}-voqxugfzq9-voqxugfzq9.gz
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/trqaznzmmw-{0}-qkh8rwvygv-qkh8rwvygv.gz
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/5j5wjis3j8-{0}-f4s1rbne7w-f4s1rbne7w.gz
 /workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/exzj92bso2-{0}-e7p4dn98si-e7p4dn98si.gz
 /workspaces/systems-dev/EVotingSystem/bin/Debug/net10.0/appsettings.Production.json
 /workspaces/systems-dev/EVotingSystem/bin/Debug/net10.0/appsettings.Production.template.json
+/workspaces/systems-dev/EVotingSystem/obj/Debug/net10.0/compressed/mtzki86i62-{0}-n4ctr02o72-n4ctr02o72.gz
