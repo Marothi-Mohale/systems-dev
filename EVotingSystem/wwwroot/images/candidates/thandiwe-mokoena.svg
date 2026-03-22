@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="title desc">
+  <title id="title">Thandiwe Mokoena placeholder portrait</title>
+  <desc id="desc">Illustrated candidate placeholder for demo use.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5d2f78"/>
+      <stop offset="100%" stop-color="#d96f5d"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <circle cx="400" cy="210" r="110" fill="#f2d8c0"/>
+  <path d="M274 206c8-92 65-144 126-144s118 52 126 144c-25-35-71-61-126-61s-101 26-126 61z" fill="#231329"/>
+  <path d="M222 560c23-116 99-188 178-188 82 0 156 72 178 188z" fill="#fff8f1" opacity="0.95"/>
+  <text x="48" y="520" fill="#ffffff" font-family="Manrope, Arial, sans-serif" font-size="44" font-weight="800">THANDIWE MOKOENA</text>
+  <text x="48" y="560" fill="#ffe8de" font-family="Manrope, Arial, sans-serif" font-size="24">Future Voices Alliance</text>
+</svg>

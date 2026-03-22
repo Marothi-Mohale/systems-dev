@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="title desc">
+  <title id="title">Ayanda Dlamini placeholder portrait</title>
+  <desc id="desc">Illustrated candidate placeholder for demo use.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#176b5b"/>
+      <stop offset="100%" stop-color="#d3a14b"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <circle cx="400" cy="210" r="110" fill="#f4ddc7"/>
+  <path d="M280 210c15-80 75-130 120-130s105 50 120 130c-25-24-55-39-120-39s-95 15-120 39z" fill="#183630"/>
+  <path d="M225 560c18-118 96-190 175-190s157 72 175 190z" fill="#f7f5ef" opacity="0.95"/>
+  <text x="48" y="520" fill="#ffffff" font-family="Manrope, Arial, sans-serif" font-size="44" font-weight="800">AYANDA DLAMINI</text>
+  <text x="48" y="560" fill="#e7f5f1" font-family="Manrope, Arial, sans-serif" font-size="24">Ubuntu Forward</text>
+</svg>

@@ -338,6 +338,48 @@ The app calls `GET https://api.usercheck.com/email/{email}` with `Authorization:
 
 ## Firestore collections
 
+## Demo and Marking
+
+For demonstration and marking, use the dedicated guide in [Docs/demo-guide.md](/workspaces/systems-dev/EVotingSystem/Docs/demo-guide.md).
+
+Quick-start options:
+
+### Local demo mode
+
+- Run `./scripts/start-demo-local.sh`
+- The app uses demo-safe seeded candidates from configuration
+- Restarting the app resets in-memory demo users and returns the environment to a clean local demo state
+
+### Firestore-backed demo mode
+
+- Configure secure Firebase credentials through user secrets or environment variables
+- Keep `Firestore:SeedOnStartup=true`
+- On startup, the app seeds demo candidates and the baseline election statistics document automatically
+
+### Reset guidance
+
+- Run `./scripts/reset-demo-notes.sh` for reset instructions
+- In Firestore-backed mode, clear:
+  - `candidates`
+  - `votes`
+  - `electionStats`
+  - `voterProfiles`
+- Restart the app to reseed the demo data
+
+### Demo-safe defaults
+
+- Firebase secrets are blank by default in `appsettings.json`
+- If Firebase is not configured, the app still demonstrates cleanly using local seeded candidates
+- If Firestore is temporarily unavailable, the UI shows safe fallback messaging instead of raw backend errors
+
+### What markers should notice
+
+- public guest access to the results dashboard
+- clean register -> login -> ballot -> results flow
+- one-vote-only enforcement
+- percentage and turnout calculations
+- graceful empty states and retry-safe error handling
+
 - `elections`
 - `candidates`
 - `votes`

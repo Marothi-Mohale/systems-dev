@@ -64,6 +64,7 @@ public class FirestoreSeedService(
             Party = candidate.Party,
             Slogan = candidate.Slogan,
             Biography = candidate.Biography,
+            PhotoUrl = candidate.PhotoUrl,
             VoteCount = candidate.VoteCount,
             IsActive = candidate.IsActive,
             DisplayOrder = candidate.DisplayOrder,

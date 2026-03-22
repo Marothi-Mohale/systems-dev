@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="title desc">
+  <title id="title">Liam Naidoo placeholder portrait</title>
+  <desc id="desc">Illustrated candidate placeholder for demo use.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#153e63"/>
+      <stop offset="100%" stop-color="#3aa0c8"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <circle cx="400" cy="210" r="108" fill="#f0d5bc"/>
+  <path d="M294 192c16-74 73-122 106-122 61 0 122 62 122 136-28-29-79-57-121-57-40 0-80 16-107 43z" fill="#212121"/>
+  <path d="M220 560c28-122 106-194 180-194 78 0 156 72 180 194z" fill="#f7f7f5" opacity="0.95"/>
+  <text x="48" y="520" fill="#ffffff" font-family="Manrope, Arial, sans-serif" font-size="44" font-weight="800">LIAM NAIDOO</text>
+  <text x="48" y="560" fill="#e8f8ff" font-family="Manrope, Arial, sans-serif" font-size="24">Civic Renewal Movement</text>
+</svg>
