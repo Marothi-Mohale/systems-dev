@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "EVotingSystem.Tests/1.0.0": {
+        "dependencies": {
+          "EVotingSystem": "1.0.0"
+        },
+        "runtime": {
+          "EVotingSystem.Tests.dll": {}
+        }
+      },
+      "EVotingSystem/1.0.0": {
+        "runtime": {
+          "EVotingSystem.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "EVotingSystem.Tests/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "EVotingSystem/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
